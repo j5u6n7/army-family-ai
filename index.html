@@ -325,6 +325,16 @@ h2{
  box-shadow:0 2px 9px #15243a0b
 }
 
+/* 카드 클릭 시 피드백을 위한 클래스 */
+.clickable-card{
+ cursor:pointer;
+ transition:transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.clickable-card:active{
+ transform:scale(0.98);
+}
+
 .card small{
  color:#718096
 }
@@ -924,7 +934,8 @@ hr{
  <div class="grid">
 
 
-  <div class="card">
+  <!-- 진행 사건 카드 클릭 시 사건페이지로 이동 -->
+  <div class="card clickable-card" onclick="goNav('cases', 1)">
 
    <small>진행 사건</small>
 
@@ -937,7 +948,8 @@ hr{
   </div>
 
 
-  <div class="card">
+  <!-- 상담 기록 카드 클릭 시 상담페이지로 이동 -->
+  <div class="card clickable-card" onclick="goNav('consult', 2)">
 
    <small>상담 기록</small>
 
@@ -950,7 +962,8 @@ hr{
   </div>
 
 
-  <div class="card">
+  <!-- 후속조치 카드 클릭 시 관리페이지로 이동 -->
+  <div class="card clickable-card" onclick="goNav('follow', 4)">
 
    <small>후속조치</small>
 
@@ -963,7 +976,8 @@ hr{
   </div>
 
 
-  <div class="card">
+  <!-- 완료 카드 클릭 시 관리페이지로 이동 -->
+  <div class="card clickable-card" onclick="goNav('follow', 4)">
 
    <small>완료</small>
 
@@ -979,7 +993,8 @@ hr{
  </div>
 
 
- <div class="box">
+ <!-- 업무알림 클릭 시 검색페이지/알림 관련 페이지로 이동하도록 설정 -->
+ <div class="box clickable-card" onclick="goNav('search', 4)">
 
   <h2>🔔 업무알림</h2>
 
@@ -2292,6 +2307,18 @@ function go(
 
 }
 
+/* 카드 이동 시 하단 네비게이션 활성화도 함께 변경하는 도우미 함수 */
+function goNav(pageId, navIndex){
+
+ const navItems = document.querySelectorAll(".nav");
+ if(navItems[navIndex]){
+  go(pageId, navItems[navIndex]);
+ }else{
+  go(pageId);
+ }
+
+}
+
 
 /* =====================================================
    MODAL
@@ -2664,7 +2691,7 @@ function renderHome(){
    .map(c => `
 
 <div
- class="case"
+ class="case clickable-card"
  onclick="detail('${c.id}')">
 
  <b>
@@ -5510,4 +5537,4 @@ function escapeHtml(value){
 
 
 </body>
-      </html>
+</html>
