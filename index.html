@@ -1,445 +1,5695 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>육군 유가족지원 AI</title>
-  <style>
-    /* 기본 글로벌 스타일 */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    }
 
-    body {
-      background-color: #f4f6f9;
-      color: #333;
-      padding-bottom: 70px; /* 하단 네비게이션 공간 */
-    }
+<meta charset="utf-8">
 
-    /* 헤더 스타일 */
-    header {
-      background-color: #fff;
-      padding: 15px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #e0e0e0;
-    }
+<meta name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 
-    .logo-title {
-      font-size: 1.1rem;
-      font-weight: bold;
-      color: #1b4996;
-    }
+<meta name="theme-color" content="#173e64">
 
-    .logo-subtitle {
-      font-size: 0.65rem;
-      color: #888;
-      letter-spacing: 1px;
-    }
+<title>육군 유가족지원 AI</title>
 
-    .user-profile {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 0.85rem;
-      color: #555;
-    }
+<style>
 
-    .logout-btn {
-      background-color: #5a6268;
-      color: #fff;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 15px;
-      font-size: 0.75rem;
-      cursor: pointer;
-    }
+/* =====================================================
+   기본
+===================================================== */
 
-    /* 메인 대시보드 컨테이너 */
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 15px;
-    }
+*{
+ box-sizing:border-box
+}
 
-    .banner {
-      background-color: #eaf2ff;
-      border-radius: 8px;
-      padding: 12px 15px;
-      font-size: 0.85rem;
-      color: #1b4996;
-      margin-bottom: 15px;
-    }
+body{
+ margin:0;
+ background:#f2f5f8;
+ color:#172033;
+ font-family:Arial,"Noto Sans KR",sans-serif
+}
 
-    /* 카드 그리드 */
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 15px;
-    }
+button,
+input,
+textarea,
+select{
+ font:inherit
+}
 
-    .card {
-      background: #fff;
-      border-radius: 10px;
-      padding: 15px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.03);
-    }
+button{
+ border:0;
+ border-radius:10px;
+ padding:11px 14px;
+ background:#1d5fae;
+ color:#fff;
+ font-weight:800;
+ cursor:pointer
+}
 
-    .card-title {
-      font-size: 0.8rem;
-      color: #666;
-      margin-bottom: 8px;
-    }
+button:active{
+ transform:scale(.98)
+}
 
-    .card-value {
-      font-size: 1.8rem;
-      font-weight: bold;
-    }
+button:disabled{
+ opacity:.5;
+ cursor:not-allowed
+}
 
-    .val-blue { color: #1b4996; }
-    .val-green { color: #2e7d32; }
-    .val-orange { color: #e65100; }
-    .val-red { color: #c62828; }
+button.secondary{
+ background:#e8f1ff;
+ color:#1d5fae
+}
 
-    /* 사건 관련 세션 */
-    .section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin: 20px 0 10px 0;
-    }
+button.green{
+ background:#09865f
+}
 
-    .section-title {
-      font-size: 1rem;
-      font-weight: bold;
-    }
+button.red{
+ background:#d64545
+}
 
-    .action-btn {
-      background-color: #1b4996;
-      color: #fff;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      font-weight: bold;
-      cursor: pointer;
-    }
+button.gray{
+ background:#667085
+}
 
-    .case-card {
-      background: #fff;
-      border-radius: 10px;
-      padding: 15px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.03);
-    }
+button.orange{
+ background:#c87509
+}
 
-    .case-title {
-      font-weight: bold;
-      margin-bottom: 5px;
-    }
+.full{
+ width:100%
+}
 
-    .badge {
-      background-color: #e3f2fd;
-      color: #1976d2;
-      font-size: 0.7rem;
-      padding: 2px 6px;
-      border-radius: 4px;
-      margin-left: 5px;
-    }
+.hidden{
+ display:none!important
+}
 
-    .case-sub {
-      font-size: 0.75rem;
-      color: #777;
-    }
 
-    /* 하단 탭 바 */
-    .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      background: #fff;
-      border-top: 1px solid #ddd;
-      display: flex;
-      justify-content: space-around;
-      padding: 8px 0;
-    }
+/* =====================================================
+   로그인
+===================================================== */
 
-    .nav-item {
-      text-align: center;
-      font-size: 0.7rem;
-      color: #666;
-      text-decoration: none;
-    }
+.login{
+ min-height:100vh;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ padding:20px;
+ background:
+ linear-gradient(
+  135deg,
+  #102f4e,
+  #183e62 50%,
+  #e8edf2
+ )
+}
 
-    .nav-item.active {
-      color: #1b4996;
-      font-weight: bold;
-    }
+.login-box{
+ width:100%;
+ max-width:430px;
+ background:#fff;
+ border-radius:22px;
+ padding:28px;
+ box-shadow:0 20px 60px #0005
+}
 
-    /* ===================================================
-       1. 화면 중앙 대각선 실명 워터마크 스타일
-    =================================================== */
-    .watermark {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%) rotate(-25deg);
-      font-size: 2rem;
-      font-weight: bold;
-      color: rgba(0, 0, 0, 0.08); /* 투명도 조절로 본문 가독성 유지 */
-      pointer-events: none;       /* 클릭/터치 이벤트 투과 */
-      z-index: 999;
-      white-space: nowrap;
-      user-select: none;
-    }
 
-    /* ===================================================
-       2. 초기 비밀번호 변경 모달 스타일
-    =================================================== */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.6);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 10000;
-    }
+/* =====================================================
+   육군 스타일 마크
+===================================================== */
 
-    .modal-box {
-      background: #fff;
-      padding: 24px;
-      border-radius: 12px;
-      width: 90%;
-      max-width: 400px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    }
+.army{
+ display:flex;
+ align-items:center;
+ gap:12px;
+ margin-bottom:25px
+}
 
-    .modal-box h2 {
-      font-size: 1.1rem;
-      color: #1b4996;
-      margin-bottom: 12px;
-    }
+.army-mark{
+ width:62px;
+ height:62px;
+ border-radius:50%;
+ background:
+  radial-gradient(
+   circle at 50% 45%,
+   #315f43 0%,
+   #173f2d 58%,
+   #10291f 100%
+  );
+ border:3px solid #b99b4e;
+ display:grid;
+ place-items:center;
+ position:relative;
+ box-shadow:
+  inset 0 0 0 2px #ffffff20,
+  0 3px 8px #0003
+}
 
-    .security-notice {
-      background-color: #f8f9fa;
-      border-left: 4px solid #1b4996;
-      padding: 10px;
-      font-size: 0.8rem;
-      color: #444;
-      margin-bottom: 15px;
-      line-height: 1.4;
-    }
+.army-mark::before{
+ content:"";
+ position:absolute;
+ width:43px;
+ height:43px;
+ border:2px solid #d5bd72;
+ border-radius:50%;
+ opacity:.9
+}
 
-    .input-group {
-      margin-bottom: 12px;
-      text-align: left;
-    }
+.army-symbol{
+ position:relative;
+ z-index:2;
+ color:#e2c86f;
+ font-size:25px;
+ line-height:1;
+ text-shadow:0 1px 2px #0008
+}
 
-    .input-group label {
-      display: block;
-      font-size: 0.8rem;
-      margin-bottom: 4px;
-      font-weight: bold;
-      color: #333;
-    }
+.army b{
+ font-size:19px;
+ color:#173b61
+}
 
-    .input-group input {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 0.9rem;
-    }
+.army small{
+ display:block;
+ color:#8a96a6;
+ font-size:9px;
+ letter-spacing:1px;
+ margin-top:3px
+}
 
-    .submit-btn {
-      width: 100%;
-      padding: 12px;
-      background-color: #1b4996;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-weight: bold;
-      font-size: 0.95rem;
-      cursor: pointer;
-      margin-top: 5px;
-    }
+.login-box h1{
+ font-size:22px;
+ margin:0 0 7px
+}
 
-    .submit-btn:hover {
-      background-color: #153773;
-    }
-  </style>
+.login-box p{
+ font-size:12px;
+ color:#7a8797
+}
+
+
+/* =====================================================
+   입력
+===================================================== */
+
+label{
+ font-size:12px;
+ font-weight:800;
+ color:#586578
+}
+
+input,
+textarea,
+select{
+ width:100%;
+ border:1px solid #d9e1e9;
+ border-radius:9px;
+ padding:12px;
+ margin:6px 0 13px;
+ background:#fff;
+ color:#172033
+}
+
+textarea{
+ min-height:130px;
+ resize:vertical
+}
+
+input:focus,
+textarea:focus,
+select:focus{
+ outline:none;
+ border-color:#4285d4;
+ box-shadow:0 0 0 3px #4285d415
+}
+
+
+/* =====================================================
+   APP
+===================================================== */
+
+.app{
+ max-width:700px;
+ margin:auto;
+ min-height:100vh;
+ padding-bottom:84px
+}
+
+header{
+ position:sticky;
+ top:0;
+ z-index:20;
+ height:62px;
+ background:#fff;
+ border-bottom:1px solid #e2e7ed;
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ padding:0 16px
+}
+
+.logo{
+ font-weight:900;
+ color:#173e64;
+ font-size:17px
+}
+
+.logo small{
+ display:block;
+ font-size:8px;
+ color:#8995a5;
+ letter-spacing:1px
+}
+
+.userbox{
+ display:flex;
+ align-items:center;
+ gap:7px;
+ font-size:11px
+}
+
+.avatar{
+ width:34px;
+ height:34px;
+ background:#e7f0fb;
+ border-radius:50%;
+ display:grid;
+ place-items:center
+}
+
+.logout-btn{
+ padding:7px 9px;
+ font-size:10px
+}
+
+main{
+ padding:17px
+}
+
+.page{
+ display:none
+}
+
+.page.active{
+ display:block
+}
+
+h1{
+ font-size:22px;
+ margin:5px 0
+}
+
+h2{
+ font-size:16px;
+ margin:0 0 12px
+}
+
+.sub{
+ color:#748195;
+ font-size:12px;
+ margin-bottom:15px
+}
+
+.grid{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:10px
+}
+
+.card,
+.box,
+.case{
+ background:#fff;
+ border-radius:15px;
+ padding:15px;
+ margin-bottom:12px;
+ box-shadow:0 2px 9px #15243a0b
+}
+
+/* 카드 클릭 시 피드백을 위한 클래스 */
+.clickable-card{
+ cursor:pointer;
+ transition:transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.clickable-card:active{
+ transform:scale(0.98);
+}
+
+.card small{
+ color:#718096
+}
+
+.num{
+ font-size:27px;
+ font-weight:900;
+ margin-top:5px
+}
+
+.blue{
+ color:#2771db
+}
+
+.green-t{
+ color:#11956a
+}
+
+.orange-t{
+ color:#d47b0c
+}
+
+.red-t{
+ color:#db4949
+}
+
+.row{
+ display:flex;
+ gap:7px
+}
+
+.row>*{
+ flex:1
+}
+
+
+/* =====================================================
+   뱃지
+===================================================== */
+
+.badge{
+ display:inline-block;
+ font-size:10px;
+ padding:5px 8px;
+ border-radius:20px;
+ background:#e8f1ff;
+ color:#2464c2
+}
+
+.badge.green{
+ background:#dcf8eb;
+ color:#087a53
+}
+
+.badge.orange{
+ background:#fff0d5;
+ color:#9c6100
+}
+
+.badge.red{
+ background:#ffe2e2;
+ color:#c53c3c
+}
+
+.badge.gray{
+ background:#edf0f3;
+ color:#667085
+}
+
+.item{
+ background:#f7f9fb;
+ border-radius:10px;
+ padding:12px;
+ margin:8px 0;
+ font-size:13px;
+ line-height:1.65
+}
+
+.notice, .security-notice{
+ background:#edf7ff;
+ border:1px solid #cde5fb;
+ padding:11px;
+ border-radius:10px;
+ font-size:12px;
+ margin-bottom:12px;
+ line-height:1.4
+}
+
+.security-notice{
+ background-color: #f8f9fa;
+ border-left: 4px solid #1b4996;
+ color: #444;
+}
+
+.alert{
+ background:#fff4e5;
+ border:1px solid #ffd49c;
+ color:#8c5300;
+ border-radius:10px;
+ padding:12px;
+ font-size:13px
+}
+
+.search{
+ display:flex;
+ gap:7px
+}
+
+.search input{
+ margin:0
+}
+
+.empty{
+ text-align:center;
+ color:#8793a3;
+ padding:25px
+}
+
+.ai{
+ background:
+ linear-gradient(
+  140deg,
+  #edf6ff,
+  #f4f0ff
+ );
+ border:1px solid #cddcf6;
+ border-radius:14px;
+ padding:15px
+}
+
+
+/* =====================================================
+   하단 메뉴
+===================================================== */
+
+.bottom{
+ position:fixed;
+ bottom:0;
+ left:50%;
+ transform:translateX(-50%);
+ width:100%;
+ max-width:700px;
+ height:70px;
+ background:#fff;
+ border-top:1px solid #e1e6ec;
+ display:grid;
+ grid-template-columns:repeat(5,1fr);
+ z-index:30
+}
+
+.nav{
+ text-align:center;
+ padding-top:8px;
+ color:#7b8795;
+ font-size:10px
+}
+
+.nav b{
+ display:block;
+ font-size:20px
+}
+
+.nav.active{
+ color:#246bd2;
+ font-weight:800
+}
+
+
+/* =====================================================
+   모달
+===================================================== */
+
+.modal,
+.security-modal,
+.modal-overlay{
+ position:fixed;
+ inset:0;
+ background:#0008;
+ display:none;
+ align-items:flex-end;
+ z-index:100;
+ padding:0
+}
+
+.modal.show,
+.security-modal.show,
+.modal-overlay.show{
+ display:flex
+}
+
+.sheet{
+ background:#fff;
+ width:100%;
+ max-width:700px;
+ margin:auto;
+ border-radius:20px 20px 0 0;
+ padding:20px;
+ max-height:92vh;
+ overflow:auto
+}
+
+.close{
+ text-align:right;
+ color:#64748b;
+ margin-bottom:10px;
+ cursor:pointer
+}
+
+.security-modal,
+.modal-overlay{
+ align-items:center;
+ justify-content:center;
+ padding:20px;
+ z-index:200
+}
+
+.security-box,
+.modal-box{
+ width:100%;
+ max-width:430px;
+ background:#fff;
+ border-radius:20px;
+ padding:22px;
+ box-shadow:0 20px 60px #0008
+}
+
+.security-icon{
+ width:58px;
+ height:58px;
+ background:#fff4df;
+ border-radius:50%;
+ display:grid;
+ place-items:center;
+ font-size:28px
+}
+
+.checkline{
+ display:flex;
+ align-items:center;
+ gap:8px;
+ background:#f7f9fb;
+ padding:10px;
+ border-radius:9px;
+ margin:10px 0;
+ font-size:12px
+}
+
+.checkline input{
+ width:auto;
+ margin:0
+}
+
+
+/* =====================================================
+   워터마크
+===================================================== */
+
+.watermark{
+ position:fixed;
+ pointer-events:none;
+ left:50%;
+ top:50%;
+ transform:
+  translate(-50%,-50%)
+  rotate(-25deg);
+ color:#163d6328;
+ font-size:23px;
+ font-weight:900;
+ z-index:90;
+ white-space:nowrap;
+ user-select:none;
+}
+
+
+/* =====================================================
+   음성 변환 UI
+===================================================== */
+
+.transcribe-box{
+ background:
+  linear-gradient(
+   140deg,
+   #f0f8ff,
+   #f6f2ff
+  );
+ border:1px solid #d3e1f7;
+ border-radius:14px;
+ padding:15px;
+ margin-top:8px
+}
+
+.transcribe-title{
+ font-weight:900;
+ color:#173e64;
+ font-size:15px;
+ margin-bottom:7px
+}
+
+.transcribe-icon{
+ font-size:30px;
+ margin-bottom:5px
+}
+
+.transcribing{
+ background:#eef5ff;
+ border:1px solid #c8dcfa;
+ color:#235fa8;
+ border-radius:10px;
+ padding:13px;
+ text-align:center;
+ font-weight:800;
+ line-height:1.7
+}
+
+.success-box{
+ background:#ecfbf4;
+ border:1px solid #bcebd5;
+ color:#08744f;
+ border-radius:10px;
+ padding:12px;
+ font-size:12px
+}
+
+audio{
+ width:100%
+}
+
+hr{
+ border:0;
+ border-top:1px solid #e5e9ee;
+ margin:18px 0
+}
+
+
+/* =====================================================
+   반응형
+===================================================== */
+
+@media(max-width:480px){
+
+ header{
+  padding:0 10px
+ }
+
+ .logo{
+  font-size:14px
+ }
+
+ .userbox{
+  font-size:9px
+ }
+
+ main{
+  padding:12px
+ }
+
+ .num{
+  font-size:23px
+ }
+
+}
+
+
+/* =====================================================
+   인쇄
+===================================================== */
+
+@media print{
+
+ .bottom,
+ header,
+ button{
+  display:none!important
+ }
+
+ .app{
+  max-width:none
+ }
+
+}
+
+</style>
 </head>
+
+
 <body>
 
-  <!-- 중앙 대각선 워터마크 -->
-  <div id="centerWatermark" class="watermark">유가족지원 AI</div>
 
-  <!-- 상단 헤더 -->
-  <header>
-    <div>
-      <div class="logo-title">육군 유가족지원 AI</div>
-      <div class="logo-subtitle">FAMILY SUPPORT PLATFORM</div>
-    </div>
-    <div class="user-profile">
-      <span id="headerUserName">홍길동 · 관리자</span>
-      <button class="logout-btn" onclick="resetDemo()">초기화</button>
-    </div>
-  </header>
+<!-- =====================================================
+     보안경고
+===================================================== -->
 
-  <!-- 메인 대시보드 영역 -->
-  <div class="container">
-    <div class="banner">
-      🔔 유가족지원 업무자료와 사건 업데이트를 관리합니다.
+<div id="securityModal" class="security-modal">
+
+ <div class="security-box">
+
+  <div class="security-icon">⚠️</div>
+
+  <h2>보안 안내</h2>
+
+  <p>
+   본 프로그램은 유가족 관련 개인정보 및 상담정보를
+   취급할 수 있습니다.
+  </p>
+
+  <p>
+   승인된 사용자만 사용해야 하며 개인정보와 상담내용을
+   외부에 무단 공유하지 마십시오.
+  </p>
+
+  <p>
+   AI가 생성한 내용은 업무 참고용입니다.
+   실제 지원 여부와 자격요건은 반드시 공식자료를
+   확인한 후 최종 결정하십시오.
+  </p>
+
+  <label class="checkline">
+
+   <input
+    type="checkbox"
+    id="securityAgree">
+
+   보안사항을 확인했습니다.
+
+  </label>
+
+  <button
+   class="full"
+   onclick="closeSecurity()">
+
+   확인하고 시작
+
+  </button>
+
+ </div>
+
+</div>
+
+
+<!-- =====================================================
+     초기 계정 정보 변경 모달
+===================================================== -->
+
+<div id="firstLoginModal" class="modal-overlay">
+  <div class="modal-box">
+    <h2>보안을 위한 계정 정보 변경</h2>
+    
+    <div class="security-notice">
+      🔒 <strong>보안 관련 안내사항</strong><br>
+      • 본 시스템은 정보 유출 방지를 위해 <strong>화면 중앙에 실명 워터마크</strong>가 표기됩니다.<br>
+      • 무단 캡처 및 공유 시 담당자 추적이 가능하므로 업무 목적 외 사용을 금합니다.
     </div>
 
-    <div class="grid">
-      <div class="card">
-        <div class="card-title">진행 사건</div>
-        <div class="card-value val-blue">1</div>
+    <form id="userInfoForm" onsubmit="handleFirstLoginSubmit(event)">
+      <div style="text-align:left;">
+        <label for="userName">사용자 성명 (실명)</label>
+
+        <input type="text" id="userName" placeholder="예: 홍길동" required>
       </div>
-      <div class="card">
-        <div class="card-title">상담 기록</div>
-        <div class="card-value val-green">0</div>
-      </div>
-      <div class="card">
-        <div class="card-title">후속조치</div>
-        <div class="card-value val-orange">0</div>
-      </div>
-      <div class="card">
-        <div class="card-title">완료</div>
-        <div class="card-value val-red">0</div>
-      </div>
-    </div>
-
-    <div class="banner">
-      🔔 새로운 지원자료가 등록되면 이곳에 표시됩니다.
-    </div>
-
-    <div class="section-header">
-      <div class="section-title">👤 최근 사건</div>
-      <button class="action-btn">+ 사건등록</button>
-    </div>
-
-    <div class="case-card">
-      <div class="case-title">
-        2026-001 · 김○○ <span class="badge">지원 진행중</span>
-      </div>
-      <div class="case-sub">배우자 / 자녀 2명 · 대전광역시</div>
-    </div>
-  </div>
-
-  <!-- 하단 네비게이션 -->
-  <nav class="bottom-nav">
-    <a href="#" class="nav-item active">🏠<br>홈</a>
-    <a href="#" class="nav-item">👤<br>사건</a>
-    <a href="#" class="nav-item">📞<br>상담</a>
-    <a href="#" class="nav-item">🤖<br>AI</a>
-    <a href="#" class="nav-item">✅<br>관리</a>
-  </nav>
-
-  <!-- 초기 계정 정보 변경 모달 -->
-  <div id="firstLoginModal" class="modal-overlay" style="display: none;">
-    <div class="modal-box">
-      <h2>보안을 위한 계정 정보 변경</h2>
       
-      <div class="security-notice">
-        🔒 <strong>보안 관련 안내사항</strong><br>
-        • 본 시스템은 정보 유출 방지를 위해 <strong>화면 중앙에 실명 워터마크</strong>가 표기됩니다.<br>
-        • 무단 캡처 및 공유 시 담당자 추적이 가능하므로 업무 목적 외 사용을 금합니다.
+      <div style="text-align:left;">
+        <label for="newUserId">새 아이디</label>
+
+        <input type="text" id="newUserId" placeholder="새 아이디 입력" required>
       </div>
 
-      <form id="userInfoForm">
-        <div class="input-group">
-          <label for="userName">사용자 성명 (실명)</label>
-          <input type="text" id="userName" placeholder="예: 홍길동" required>
-        </div>
-        
-        <div class="input-group">
-          <label for="newUserId">새 아이디</label>
-          <input type="text" id="newUserId" placeholder="새 아이디 입력" required>
-        </div>
+      <div style="text-align:left;">
+        <label for="newPassword">새 비밀번호</label>
 
-        <div class="input-group">
-          <label for="newPassword">새 비밀번호</label>
-          <input type="password" id="newPassword" placeholder="새 비밀번호 입력" required>
-        </div>
+        <input type="password" id="newPassword" placeholder="새 비밀번호 입력" required>
+      </div>
 
-        <button type="submit" class="submit-btn">변경 완료 및 시작하기</button>
-      </form>
+      <button type="submit" class="full" style="margin-top:10px;">변경 완료 및 시작하기</button>
+
+    </form>
+  </div>
+</div>
+
+
+<!-- =====================================================
+     로그인
+===================================================== -->
+
+<div id="loginScreen" class="login">
+
+ <div class="login-box">
+
+  <div class="army">
+
+   <div
+    class="army-mark"
+    aria-label="육군">
+
+    <div class="army-symbol">
+     ★
     </div>
+
+   </div>
+
+   <div>
+
+    <b>유가족지원 AI</b>
+
+    <small>
+     FAMILY SUPPORT PLATFORM
+    </small>
+
+   </div>
+
   </div>
 
-  <!-- 스크립트 로직 -->
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      // 1. 초기 로그인 여부 및 저장된 사용자명 확인 (LocalStorage)
-      const isFirstLogin = localStorage.getItem("isFirstLogin") !== "false";
-      const savedName = localStorage.getItem("userName");
 
-      if (isFirstLogin) {
-        // 최초 진입 시 모달 표시
-        document.getElementById("firstLoginModal").style.display = "flex";
-      } else if (savedName) {
-        // 기존 설정 값이 있으면 화면 업데이트
-        applyUserInfo(savedName);
-      }
+  <h1>로그인</h1>
 
-      // 2. 폼 제출 이벤트 처리
-      document.getElementById("userInfoForm").addEventListener("submit", function (e) {
-        e.preventDefault();
+  <p>
+   승인된 사용자만 플랫폼을 이용할 수 있습니다.
+  </p>
 
-        const nameValue = document.getElementById("userName").value.trim();
-        const newId = document.getElementById("newUserId").value.trim();
-        const newPw = document.getElementById("newPassword").value.trim();
 
-        if (!nameValue || !newId || !newPw) {
-          alert("모든 항목을 입력해 주세요.");
-          return;
-        }
+  <label>아이디</label>
 
-        // 로컬 스토리지에 데이터 저장 및 최초 로그인 상태 변경
-        localStorage.setItem("userName", nameValue);
-        localStorage.setItem("isFirstLogin", "false");
+  <input
+   id="loginId"
+   placeholder="아이디">
 
-        // 화면 요소(상단 이름 및 중앙 워터마크) 업데이트
-        applyUserInfo(nameValue);
 
-        // 모달 닫기
-        document.getElementById("firstLoginModal").style.display = "none";
-        alert("계정 정보가 성공적으로 변경되었습니다.");
-      });
-    });
+  <label>비밀번호</label>
 
-    // 화면의 워터마크 및 프로필 이름 변경 함수
-    function applyUserInfo(name) {
-      // 중앙 워터마크 텍스트 수정
-      const watermark = document.getElementById("centerWatermark");
-      if (watermark) {
-        watermark.innerText = `유가족지원 AI ${name}`;
-      }
+  <input
+   id="loginPw"
+   type="password"
+   placeholder="비밀번호"
+   onkeydown="if(event.key==='Enter')login()">
 
-      // 우측 상단 사용자 이름 수정
-      const headerUser = document.getElementById("headerUserName");
-      if (headerUser) {
-        headerUser.innerText = `${name} · 관리자`;
-      }
+
+  <button
+   class="full"
+   onclick="login()">
+
+   로그인
+
+  </button>
+
+
+  <div
+   style="
+    margin-top:15px;
+    text-align:center;
+    color:#1d5fae;
+    font-size:12px;
+    font-weight:800;
+    cursor:pointer
+   "
+   onclick="openModal('applyModal')">
+
+   사용자 이용신청
+
+  </div>
+
+
+  <div
+   style="
+    margin-top:20px;
+    padding:10px;
+    background:#f5f8fb;
+    border-radius:9px;
+    text-align:center;
+    font-size:10px;
+    color:#8a96a6
+   ">
+
+   시연용 관리자 계정<br>
+
+   <b id="demoAccountInfo">admin / 1234</b>
+
+  </div>
+
+ </div>
+
+</div>
+
+
+<!-- =====================================================
+     APP
+===================================================== -->
+
+<div id="app" class="app hidden">
+
+
+<header>
+
+ <div class="logo">
+
+  육군 유가족지원 AI
+
+  <small>
+   FAMILY SUPPORT PLATFORM
+  </small>
+
+ </div>
+
+
+ <div class="userbox">
+
+  <span id="headerUser"></span>
+
+  <div class="avatar">
+   👤
+  </div>
+
+  <button
+   class="gray logout-btn"
+   onclick="logout()">
+
+   로그아웃
+
+  </button>
+
+  <button
+   class="logout-btn"
+   style="background-color: #5a6268;"
+   onclick="resetDemo()">
+
+   초기화
+
+  </button>
+
+ </div>
+
+</header>
+
+
+<main>
+
+
+<!-- =====================================================
+     HOME
+===================================================== -->
+
+<section
+ id="home"
+ class="page active">
+
+ <h1>안녕하세요 👋</h1>
+
+ <div class="sub">
+  오늘의 유가족지원 업무입니다.
+ </div>
+
+
+ <div class="notice">
+
+  🔔 유가족지원 업무자료와 사건 업데이트를 관리합니다.
+
+ </div>
+
+
+ <div class="grid">
+
+
+  <!-- 진행 사건 카드 클릭 시 사건페이지로 이동 -->
+  <div class="card clickable-card" onclick="goNav('cases', 1)">
+
+   <small>진행 사건</small>
+
+   <div
+    id="cntCase"
+    class="num blue">
+    0
+   </div>
+
+  </div>
+
+
+  <!-- 상담 기록 카드 클릭 시 상담페이지로 이동 -->
+  <div class="card clickable-card" onclick="goNav('consult', 2)">
+
+   <small>상담 기록</small>
+
+   <div
+    id="cntConsult"
+    class="num green-t">
+    0
+   </div>
+
+  </div>
+
+
+  <!-- 후속조치 카드 클릭 시 관리페이지로 이동 -->
+  <div class="card clickable-card" onclick="goNav('follow', 4)">
+
+   <small>후속조치</small>
+
+   <div
+    id="cntTodo"
+    class="num orange-t">
+    0
+   </div>
+
+  </div>
+
+
+  <!-- 완료 카드 클릭 시 관리페이지로 이동 -->
+  <div class="card clickable-card" onclick="goNav('follow', 4)">
+
+   <small>완료</small>
+
+   <div
+    id="cntDone"
+    class="num red-t">
+    0
+   </div>
+
+  </div>
+
+
+ </div>
+
+
+ <!-- 업무알림 클릭 시 검색페이지/알림 관련 페이지로 이동하도록 설정 -->
+ <div class="box clickable-card" onclick="goNav('search', 4)">
+
+  <h2>🔔 업무알림</h2>
+
+  <div id="notifications"></div>
+
+ </div>
+
+
+ <div class="box">
+
+  <div
+   style="
+    display:flex;
+    justify-content:space-between
+   ">
+
+   <h2>👤 최근 사건</h2>
+
+   <button
+    onclick="openCase()">
+
+    + 사건등록
+
+   </button>
+
+  </div>
+
+
+  <div id="homeCases"></div>
+
+ </div>
+
+</section>
+
+
+<!-- =====================================================
+     CASE
+===================================================== -->
+
+<section
+ id="cases"
+ class="page">
+
+ <h1>👤 사건관리</h1>
+
+ <div class="sub">
+  사건·유가족·사망정보·상담·조치사항을 관리합니다.
+ </div>
+
+
+ <div class="box">
+
+  <div class="search">
+
+   <input
+    id="globalSearch"
+    placeholder="사건번호·고인·상담·조치사항 검색">
+
+   <button onclick="searchAll()">
+    검색
+   </button>
+
+  </div>
+
+ </div>
+
+
+ <button
+  class="full"
+  onclick="openCase()">
+
+  + 새 사건 등록
+
+ </button>
+
+
+ <div style="height:12px"></div>
+
+
+ <div id="caseList"></div>
+
+</section>
+
+
+<!-- =====================================================
+     DETAIL
+===================================================== -->
+
+<section
+ id="detail"
+ class="page">
+
+ <div
+  onclick="go('cases')"
+  style="
+   color:#246bd2;
+   font-size:13px;
+   margin-bottom:12px;
+   cursor:pointer
+  ">
+
+  ← 사건목록
+
+ </div>
+
+
+ <div id="detailContent"></div>
+
+</section>
+
+
+<!-- =====================================================
+     DEATH
+===================================================== -->
+
+<section
+ id="death"
+ class="page">
+
+ <h1>⚰️ 사망관리</h1>
+
+ <div class="sub">
+  사망정보와 확인사항 및 조치사항을 관리합니다.
+ </div>
+
+
+ <button
+  class="full"
+  onclick="openDeath()">
+
+  + 사망관리 등록
+
+ </button>
+
+
+ <div style="height:12px"></div>
+
+
+ <div id="deathList"></div>
+
+</section>
+
+
+<!-- =====================================================
+     CONSULT
+===================================================== -->
+
+<section
+ id="consult"
+ class="page">
+
+ <h1>📞 상담관리</h1>
+
+ <div class="sub">
+  전화·문자·방문·음성상담을 관리합니다.
+ </div>
+
+
+ <div class="box">
+
+
+  <label>사건</label>
+
+  <select id="consultCase"></select>
+
+
+  <label>상담방법</label>
+
+  <select id="consultMethod">
+
+   <option>전화</option>
+   <option>문자</option>
+   <option>방문</option>
+   <option>음성</option>
+   <option>기타</option>
+
+  </select>
+
+
+  <label>상담일시</label>
+
+  <input
+   id="consultDateTime"
+   type="datetime-local">
+
+
+  <label>상담내용</label>
+
+  <textarea
+   id="consultText"
+   placeholder="상담내용을 입력하세요. 녹음파일을 문자로 변환하면 이곳에 자동 입력됩니다."></textarea>
+
+
+  <!-- =================================================
+       녹음파일 → 문자
+  ================================================== -->
+
+  <div class="transcribe-box">
+
+   <div class="transcribe-icon">
+    🎧
+   </div>
+
+   <div class="transcribe-title">
+    녹음파일 → 문자변환
+   </div>
+
+   <div class="notice">
+
+    기존에 녹음해 둔 상담 음성파일을 선택하면
+    음성을 문자로 변환합니다.
+
+    <br><br>
+
+    변환된 내용은 위의
+    <b>상담내용</b>에 자동 입력됩니다.
+
+   </div>
+
+
+   <label>
+    녹음파일 선택
+   </label>
+
+
+   <input
+    id="audioFile"
+    type="file"
+    accept="audio/*"
+    onchange="selectAudioFile(event)">
+
+
+   <div id="audioFileInfo"></div>
+
+
+   <button
+    id="transcribeBtn"
+    class="full green"
+    onclick="transcribeSelectedAudio()"
+    disabled>
+
+    🎧 녹음파일 문자변환
+
+   </button>
+
+
+   <div id="transcribeStatus"></div>
+
+
+   <audio
+    id="audioPreview"
+    controls
+    class="hidden"
+    style="margin:10px 0">
+
+   </audio>
+
+  </div>
+
+
+  <hr>
+
+
+  <label>상담결과</label>
+
+  <textarea
+   id="consultResult"
+   placeholder="상담 결과 및 담당자 판단"></textarea>
+
+
+  <label>후속조치</label>
+
+  <input
+   id="consultFollow"
+   placeholder="예: 보훈 담당자 확인">
+
+
+  <div class="row">
+
+   <button
+    onclick="saveConsult()">
+
+    상담 저장
+
+   </button>
+
+
+   <button
+    class="secondary"
+    onclick="analyzeConsult()">
+
+    🤖 AI 상담
+
+   </button>
+
+  </div>
+
+
+ </div>
+
+
+ <div id="analysis"></div>
+
+
+ <div class="box">
+
+  <h2>최근 상담</h2>
+
+  <div id="consultList"></div>
+
+ </div>
+
+</section>
+
+
+<!-- =====================================================
+     AI
+===================================================== -->
+
+<section
+ id="ai"
+ class="page">
+
+ <h1>🤖 AI 상담</h1>
+
+ <div class="sub">
+  상담내용을 외부 AI 서비스로 전달하여 분석합니다.
+ </div>
+
+
+ <div class="notice">
+
+  🔐 API 비밀번호를 HTML에 저장하지 않습니다.
+
+ </div>
+
+
+ <div class="box">
+
+  <label>AI 서비스</label>
+
+  <select id="aiProvider">
+
+   <option value="chatgpt">
+    ChatGPT
+   </option>
+
+   <option value="gemini">
+    Google Gemini
+   </option>
+
+  </select>
+
+
+  <label>질문 또는 상담내용</label>
+
+  <textarea
+   id="aiText"
+   placeholder="AI에게 질문할 내용을 입력하세요"></textarea>
+
+
+  <button
+   class="full"
+   onclick="openAI()">
+
+   ✨ AI 상담 시작
+
+  </button>
+
+ </div>
+
+
+ <div class="ai">
+
+  <b>AI 요청 예시</b>
+
+  <div class="item">
+
+   • 상담내용을 요약해줘<br>
+   • 유가족에게 필요한 지원사항을 정리해줘<br>
+   • 후속조치 목록을 만들어줘<br>
+   • 상담기록을 보고서 형식으로 작성해줘<br>
+   • 추가 확인사항을 찾아줘
+
+  </div>
+
+ </div>
+
+</section>
+
+
+<!-- =====================================================
+     FOLLOW
+===================================================== -->
+
+<section
+ id="follow"
+ class="page">
+
+ <h1>✅ 후속조치</h1>
+
+ <div class="sub">
+  사건별 후속 업무를 관리합니다.
+ </div>
+
+
+ <button
+  class="full"
+  onclick="openTodo()">
+
+  + 후속조치 등록
+
+ </button>
+
+
+ <div style="height:12px"></div>
+
+
+ <div class="box">
+
+  <div id="todoList"></div>
+
+ </div>
+
+</section>
+
+
+<!-- =====================================================
+     REPORT
+===================================================== -->
+
+<section
+ id="report"
+ class="page">
+
+ <h1>📝 AI 보고서</h1>
+
+ <div class="sub">
+  상담내용을 바탕으로 보고서 초안을 작성합니다.
+ </div>
+
+
+ <div class="box">
+
+  <label>사건</label>
+
+  <select id="reportCase"></select>
+
+
+  <label>상담내용</label>
+
+  <textarea id="reportText"></textarea>
+
+
+  <button
+   class="full"
+   onclick="openAIReport()">
+
+   ✨ AI 보고서 작성
+
+  </button>
+
+ </div>
+
+</section>
+
+
+<!-- =====================================================
+     SEARCH
+===================================================== -->
+
+<section
+ id="search"
+ class="page">
+
+ <h1>🔎 통합검색</h1>
+
+
+ <div class="box">
+
+  <div class="search">
+
+   <input
+    id="caseSearch"
+    placeholder="검색어 입력">
+
+   <button onclick="searchCases()">
+    검색
+   </button>
+
+  </div>
+
+ </div>
+
+
+ <div id="searchResult"></div>
+
+</section>
+
+
+<!-- =====================================================
+     ADMIN
+===================================================== -->
+
+<section
+ id="admin"
+ class="page">
+
+ <h1>👨‍💼 관리자</h1>
+
+ <div class="sub">
+  사용자 승인 및 감사로그
+ </div>
+
+
+ <div class="box">
+
+  <h2>사용자 승인관리</h2>
+
+  <div id="userList"></div>
+
+ </div>
+
+
+ <div class="box">
+
+  <h2>🕐 감사로그</h2>
+
+  <div style="overflow:auto">
+
+   <table
+    style="
+     width:100%;
+     border-collapse:collapse;
+     font-size:11px
+    ">
+
+    <thead>
+
+     <tr>
+
+      <th>시간</th>
+      <th>사용자</th>
+      <th>행동</th>
+      <th>대상</th>
+
+     </tr>
+
+    </thead>
+
+    <tbody id="logList"></tbody>
+
+   </table>
+
+  </div>
+
+ </div>
+
+</section>
+
+
+</main>
+
+
+<!-- =====================================================
+     NAV
+===================================================== -->
+
+<nav class="bottom">
+
+
+ <div
+  class="nav active"
+  onclick="go('home',this)">
+
+  <b>🏠</b>
+  홈
+
+ </div>
+
+
+ <div
+  class="nav"
+  onclick="go('cases',this)">
+
+  <b>👤</b>
+  사건
+
+ </div>
+
+
+ <div
+  class="nav"
+  onclick="go('consult',this)">
+
+  <b>📞</b>
+  상담
+
+ </div>
+
+
+ <div
+  class="nav"
+  onclick="go('ai',this)">
+
+  <b>🤖</b>
+  AI
+
+ </div>
+
+
+ <div
+  class="nav"
+  onclick="go('follow',this)">
+
+  <b>✅</b>
+  관리
+
+ </div>
+
+
+</nav>
+
+</div>
+
+
+<!-- =====================================================
+     USER APPLY
+===================================================== -->
+
+<div
+ id="applyModal"
+ class="modal">
+
+ <div class="sheet">
+
+  <div
+   class="close"
+   onclick="closeModal('applyModal')">
+
+   ✕ 닫기
+
+  </div>
+
+
+  <h2>사용자 이용신청</h2>
+
+
+  <label>아이디</label>
+  <input id="applyId">
+
+
+  <label>비밀번호</label>
+  <input
+   id="applyPw"
+   type="password">
+
+
+  <label>소속</label>
+  <input id="applyOrg">
+
+
+  <label>계급</label>
+  <input id="applyRank">
+
+
+  <label>성명</label>
+  <input id="applyName">
+
+
+  <label>전화번호</label>
+  <input id="applyPhone">
+
+
+  <button
+   class="full"
+   onclick="applyUser()">
+
+   이용신청
+
+  </button>
+
+ </div>
+
+</div>
+
+
+<!-- =====================================================
+     CASE MODAL
+===================================================== -->
+
+<div
+ id="caseModal"
+ class="modal">
+
+ <div class="sheet">
+
+  <div
+   class="close"
+   onclick="closeModal('caseModal')">
+
+   ✕ 닫기
+
+  </div>
+
+
+  <h2>새 사건 등록</h2>
+
+
+  <label>사건번호</label>
+  <input id="fNo">
+
+
+  <label>고인</label>
+  <input id="fName">
+
+
+  <label>유가족</label>
+  <input id="fFamily">
+
+
+  <label>거주지역</label>
+  <input id="fRegion">
+
+
+  <label>현재 상태</label>
+
+  <select id="fStatus">
+
+   <option>초기 상담</option>
+   <option>지원 진행중</option>
+   <option>후속관리</option>
+   <option>완료</option>
+
+  </select>
+
+
+  <button
+   class="full"
+   onclick="saveCase()">
+
+   저장
+
+  </button>
+
+ </div>
+
+</div>
+
+
+<!-- =====================================================
+     DEATH MODAL
+===================================================== -->
+
+<div
+ id="deathModal"
+ class="modal">
+
+ <div class="sheet">
+
+  <div
+   class="close"
+   onclick="closeModal('deathModal')">
+
+   ✕ 닫기
+
+  </div>
+
+
+  <h2>⚰️ 사망관리 등록</h2>
+
+
+  <label>사건</label>
+
+  <select id="deathCase"></select>
+
+
+  <label>사망일</label>
+
+  <input
+   id="deathDate"
+   type="date">
+
+
+  <label>사망 확인일</label>
+
+  <input
+   id="deathConfirmDate"
+   type="date">
+
+
+  <label>사망 구분</label>
+
+  <select id="deathType">
+
+   <option>순직</option>
+   <option>전사</option>
+   <option>일반 사망</option>
+   <option>기타</option>
+
+  </select>
+
+
+  <label>조치사항</label>
+
+  <textarea id="deathAction"></textarea>
+
+
+  <label>조치상태</label>
+
+  <select id="deathStatus">
+
+   <option>확인 필요</option>
+   <option>조치 진행중</option>
+   <option>조치 완료</option>
+
+  </select>
+
+
+  <label>비고</label>
+
+  <textarea id="deathMemo"></textarea>
+
+
+  <button
+   class="full"
+   onclick="saveDeath()">
+
+   사망정보 저장
+
+  </button>
+
+ </div>
+
+</div>
+
+
+<!-- =====================================================
+     TODO MODAL
+===================================================== -->
+
+<div
+ id="todoModal"
+ class="modal">
+
+ <div class="sheet">
+
+  <div
+   class="close"
+   onclick="closeModal('todoModal')">
+
+   ✕ 닫기
+
+  </div>
+
+
+  <h2>후속조치 등록</h2>
+
+
+  <label>사건</label>
+
+  <select id="todoCase"></select>
+
+
+  <label>할 일</label>
+
+  <input id="todoText">
+
+
+  <label>예정일</label>
+
+  <input
+   id="todoDate"
+   type="date">
+
+
+  <button
+   class="full"
+   onclick="saveTodo()">
+
+   저장
+
+  </button>
+
+ </div>
+
+</div>
+
+
+<!-- =====================================================
+     기본 프로그램 JS
+===================================================== -->
+
+<script>
+
+"use strict";
+
+
+/* =====================================================
+   DB
+===================================================== */
+
+const DB_KEY =
+ "armyFamilySupport_integrated_v9";
+
+
+let session =
+ JSON.parse(
+  localStorage.getItem("armySession") ||
+  "null"
+ );
+
+
+let db =
+ JSON.parse(
+  localStorage.getItem(DB_KEY) ||
+  "null"
+ );
+
+
+if(!db){
+
+ db={
+
+  users:[{
+
+   id:1,
+
+   loginId:"admin",
+
+   pw:"1234",
+
+   name:"홍길동",
+
+   organization:"육군",
+
+   rank:"관리자",
+
+   phone:"",
+
+   role:"ADMIN",
+
+   status:"APPROVED"
+
+  }],
+
+
+  cases:[{
+
+   id:"c1",
+
+   no:"2026-001",
+
+   name:"김○○",
+
+   family:"배우자 / 자녀 2명",
+
+   region:"대전광역시",
+
+   status:"지원 진행중",
+
+   created:"2026-08-19"
+
+  }],
+
+
+  deaths:[],
+
+  consultations:[],
+
+  todos:[],
+
+  logs:[],
+
+  notifications:[
+
+   "새로운 지원자료가 등록되면 이곳에 표시됩니다."
+
+  ]
+
+ };
+
+
+ saveDB();
+
+}
+
+
+function saveDB(){
+
+ localStorage.setItem(
+  DB_KEY,
+  JSON.stringify(db)
+ );
+
+}
+
+
+function esc(v){
+
+ return String(v ?? "")
+  .replaceAll("&","&amp;")
+  .replaceAll("<","&lt;")
+  .replaceAll(">","&gt;")
+  .replaceAll('"',"&quot;")
+  .replaceAll("'","&#039;");
+
+}
+
+
+/* =====================================================
+   SECURITY & FIRST LOGIN MODAL
+===================================================== */
+
+function showSecurity(){
+
+ if(
+  localStorage.getItem(
+   "securityAccepted"
+  ) !== "yes"
+ ){
+
+  document
+   .getElementById("securityModal")
+   .classList.add("show");
+
+ }
+
+}
+
+
+function closeSecurity(){
+
+ if(
+  !document
+   .getElementById("securityAgree")
+   .checked
+ ){
+
+  alert(
+   "보안사항을 확인한 후 계속해 주세요."
+  );
+
+  return;
+
+ }
+
+
+ localStorage.setItem(
+  "securityAccepted",
+  "yes"
+ );
+
+
+ document
+  .getElementById("securityModal")
+  .classList.remove("show");
+
+}
+
+
+/* 초기 로그인 계정 정보 변경 로직 */
+function checkFirstLoginModal() {
+  const isFirstLogin = localStorage.getItem("isFirstLogin") !== "false";
+  if (isFirstLogin && session) {
+    document.getElementById("firstLoginModal").classList.add("show");
+  }
+}
+
+function handleFirstLoginSubmit(e) {
+  e.preventDefault();
+
+  const nameValue = document.getElementById("userName").value.trim();
+  const newId = document.getElementById("newUserId").value.trim();
+  const newPw = document.getElementById("newPassword").value.trim();
+
+  if (!nameValue || !newId || !newPw) {
+    alert("모든 항목을 입력해 주세요.");
+    return;
+  }
+
+  // DB 정보 업데이트
+  const u = db.users.find(x => x.id === session.id);
+  if (u) {
+    u.name = nameValue;
+    u.loginId = newId;
+    u.pw = newPw;
+    saveDB();
+  }
+
+  // 세션 업데이트
+  session.name = nameValue;
+  localStorage.setItem("armySession", JSON.stringify(session));
+  localStorage.setItem("isFirstLogin", "false");
+
+  // 모달 닫기 및 화면 업데이트
+  document.getElementById("firstLoginModal").classList.remove("show");
+  addWatermark();
+  
+  document.getElementById("headerUser").textContent =
+    `${session.name} · ${
+     session.role==="ADMIN"
+     ? "관리자"
+     : "사용자"
+    }`;
+
+  updateDemoAccountInfo();
+  alert("계정 정보가 성공적으로 변경되었습니다.");
+}
+
+function updateDemoAccountInfo() {
+  const adminUser = db.users.find(x => x.role === "ADMIN");
+  const demoBox = document.getElementById("demoAccountInfo");
+  if (adminUser && demoBox) {
+    demoBox.textContent = `${adminUser.loginId} / ${adminUser.pw}`;
+  }
+}
+
+function resetDemo() {
+  localStorage.removeItem("isFirstLogin");
+  localStorage.removeItem("armySession");
+  localStorage.removeItem("securityAccepted");
+  localStorage.removeItem(DB_KEY);
+  location.reload();
+}
+
+
+/* =====================================================
+   LOGIN
+===================================================== */
+
+function login(){
+
+ const id =
+  document
+   .getElementById("loginId")
+   .value
+   .trim();
+
+
+ const pw =
+  document
+   .getElementById("loginPw")
+   .value;
+
+
+ if(!id || !pw){
+
+  alert(
+   "아이디와 비밀번호를 입력해주세요."
+  );
+
+  return;
+
+ }
+
+
+ const u =
+  db.users.find(
+   x => x.loginId === id
+  );
+
+
+ if(!u || u.pw !== pw){
+
+  alert(
+   "아이디 또는 비밀번호가 올바르지 않습니다."
+  );
+
+  return;
+
+ }
+
+
+ if(u.status !== "APPROVED"){
+
+  alert(
+
+   u.status === "PENDING"
+
+   ? "관리자 승인 후 이용할 수 있습니다."
+
+   : "현재 차단된 계정입니다."
+
+  );
+
+  return;
+
+ }
+
+
+ session={
+
+  id:u.id,
+
+  name:u.name,
+
+  role:u.role
+
+ };
+
+
+ localStorage.setItem(
+  "armySession",
+  JSON.stringify(session)
+ );
+
+
+ addLog("로그인");
+
+ startApp();
+
+}
+
+
+function logout(){
+
+ addLog("로그아웃");
+
+
+ localStorage.removeItem(
+  "armySession"
+ );
+
+
+ session=null;
+
+
+ document
+  .getElementById("app")
+  .classList.add("hidden");
+
+
+ document
+  .getElementById("loginScreen")
+  .classList.remove("hidden");
+
+
+ document
+  .querySelector(".watermark")
+  ?.remove();
+
+}
+
+
+/* =====================================================
+   APP START
+===================================================== */
+
+function startApp(){
+
+ document
+  .getElementById("loginScreen")
+  .classList.add("hidden");
+
+
+ document
+  .getElementById("app")
+  .classList.remove("hidden");
+
+
+ document
+  .getElementById("headerUser")
+  .textContent =
+  `${session.name} · ${
+   session.role==="ADMIN"
+   ? "관리자"
+   : "사용자"
+  }`;
+
+
+ addWatermark();
+
+ checkFirstLoginModal();
+
+ history.replaceState({ page: "home" }, "", "#home");
+
+ refresh();
+
+}
+
+
+/* =====================================================
+   WATERMARK
+===================================================== */
+
+function addWatermark(){
+
+ if(!session)return;
+
+
+ document
+  .querySelector(".watermark")
+  ?.remove();
+
+
+ const wm =
+  document.createElement("div");
+
+
+ wm.className="watermark";
+
+
+ wm.textContent =
+  `유가족지원 AI ${session.name}`;
+
+
+ document.body.appendChild(wm);
+
+}
+
+
+/* =====================================================
+   LOG
+===================================================== */
+
+function addLog(
+ action,
+ target=""
+){
+
+ db.logs.push({
+
+  time:
+   new Date()
+    .toLocaleString("ko-KR"),
+
+  user:
+   session?.name ||
+   "미로그인",
+
+  action,
+
+  target
+
+ });
+
+
+ saveDB();
+
+}
+
+
+/* =====================================================
+   NAV
+===================================================== */
+
+function go(id, el, isBack = false){
+
+ document
+  .querySelectorAll(".page")
+  .forEach(
+   x => x.classList.remove("active")
+  );
+
+
+ document
+  .getElementById(id)
+  ?.classList.add("active");
+
+
+ if(el){
+
+  document
+   .querySelectorAll(".nav")
+   .forEach(
+    x => x.classList.remove("active")
+   );
+
+
+  el.classList.add("active");
+
+ } else {
+
+  const navs = document.querySelectorAll(".nav");
+  const navMap = { 'home': 0, 'cases': 1, 'consult': 2, 'ai': 3, 'follow': 4 };
+  if(navMap[id] !== undefined && navs[navMap[id]]){
+   document.querySelectorAll(".nav").forEach(x => x.classList.remove("active"));
+   navs[navMap[id]].classList.add("active");
+  }
+
+ }
+
+
+ if (!isBack && history.state?.page !== id) {
+  history.pushState({ page: id }, "", `#${id}`);
+ }
+
+
+ window.scrollTo(0,0);
+
+}
+
+// 기기 하단 뒤로가기 버튼 감지 이벤트
+window.addEventListener("popstate", (e) => {
+ if (e.state && e.state.page) {
+  go(e.state.page, null, true);
+ } else {
+  go("home", null, true);
+ }
+});
+
+/* 카드 이동 시 하단 네비게이션 활성화도 함께 변경하는 도우미 함수 */
+function goNav(pageId, navIndex){
+
+ const navItems = document.querySelectorAll(".nav");
+ if(navItems[navIndex]){
+  go(pageId, navItems[navIndex]);
+ }else{
+  go(pageId);
+ }
+
+}
+
+
+/* =====================================================
+   MODAL
+===================================================== */
+
+function openModal(id){
+
+ document
+  .getElementById(id)
+  .classList.add("show");
+
+}
+
+
+function closeModal(id){
+
+ document
+  .getElementById(id)
+  .classList.remove("show");
+
+}
+
+
+/* =====================================================
+   USER APPLY
+===================================================== */
+
+function applyUser(){
+
+ const id =
+  document
+   .getElementById("applyId")
+   .value
+   .trim();
+
+
+ const pw =
+  document
+   .getElementById("applyPw")
+   .value;
+
+
+ const org =
+  document
+   .getElementById("applyOrg")
+   .value
+   .trim();
+
+
+ const rank =
+  document
+   .getElementById("applyRank")
+   .value
+   .trim();
+
+
+ const name =
+  document
+   .getElementById("applyName")
+   .value
+   .trim();
+
+
+ const phone =
+  document
+   .getElementById("applyPhone")
+   .value
+   .trim();
+
+
+ if(
+  !id ||
+  !pw ||
+  !org ||
+  !rank ||
+  !name ||
+  !phone
+ ){
+
+  alert(
+   "모든 정보를 입력해주세요."
+  );
+
+  return;
+
+ }
+
+
+ if(
+  db.users.some(
+   x => x.loginId === id
+  )
+ ){
+
+  alert(
+   "이미 사용 중인 아이디입니다."
+  );
+
+  return;
+
+ }
+
+
+ db.users.push({
+
+  id:Date.now(),
+
+  loginId:id,
+
+  pw,
+
+  organization:org,
+
+  rank,
+
+  name,
+
+  phone,
+
+  role:"USER",
+
+  status:"PENDING"
+
+ });
+
+
+ saveDB();
+
+
+ closeModal(
+  "applyModal"
+ );
+
+
+ alert(
+  "이용신청이 접수되었습니다.\n" +
+  "관리자 승인 후 이용할 수 있습니다."
+ );
+
+}
+
+
+/* =====================================================
+   CASE
+===================================================== */
+
+function openCase(){
+
+ [
+  "fNo",
+  "fName",
+  "fFamily",
+  "fRegion"
+ ]
+ .forEach(
+  id =>
+   document
+    .getElementById(id)
+    .value=""
+ );
+
+
+ openModal("caseModal");
+
+}
+
+
+function saveCase(){
+
+ const no =
+  document
+   .getElementById("fNo")
+   .value
+   .trim();
+
+
+ const name =
+  document
+   .getElementById("fName")
+   .value
+   .trim();
+
+
+ if(!no || !name){
+
+  alert(
+   "사건번호와 고인을 입력해주세요."
+  );
+
+  return;
+
+ }
+
+
+ if(
+  db.cases.some(
+   x => x.no === no
+  )
+ ){
+
+  alert(
+   "이미 등록된 사건번호입니다."
+  );
+
+  return;
+
+ }
+
+
+ db.cases.push({
+
+  id:"c"+Date.now(),
+
+  no,
+
+  name,
+
+  family:
+   document
+    .getElementById("fFamily")
+    .value
+    .trim()
+   ||
+   "배우자",
+
+  region:
+   document
+    .getElementById("fRegion")
+    .value
+    .trim()
+   ||
+   "미입력",
+
+  status:
+   document
+    .getElementById("fStatus")
+    .value,
+
+  created:
+   new Date()
+    .toISOString()
+    .slice(0,10)
+
+ });
+
+
+ addLog(
+  "사건 등록",
+  no
+ );
+
+
+ saveDB();
+
+ closeModal("caseModal");
+
+ refresh();
+
+
+ alert(
+  "사건이 저장되었습니다."
+ );
+
+}
+
+
+/* =====================================================
+   CASE RENDER
+===================================================== */
+
+function renderCases(){
+
+ const el =
+  document.getElementById(
+   "caseList"
+  );
+
+
+ if(!db.cases.length){
+
+  el.innerHTML =
+   "<div class='empty'>등록된 사건이 없습니다.</div>";
+
+  return;
+
+ }
+
+
+ el.innerHTML =
+  db.cases
+   .slice()
+   .reverse()
+   .map(c => `
+
+<div class="case">
+
+ <div
+  style="
+   display:flex;
+   justify-content:space-between;
+   gap:8px
+  ">
+
+  <b>
+   ${esc(c.no)}
+   ·
+   ${esc(c.name)}
+  </b>
+
+  <span class="badge">
+   ${esc(c.status)}
+  </span>
+
+ </div>
+
+
+ <div
+  class="sub"
+  style="margin:7px 0">
+
+  ${esc(c.family)}
+  ·
+  ${esc(c.region)}
+
+ </div>
+
+
+ <div class="row">
+
+  <button
+   onclick="detail('${c.id}')">
+
+   상세보기
+
+  </button>
+
+
+  <button
+   class="secondary"
+   onclick="prepareConsult('${c.id}')">
+
+   상담
+
+  </button>
+
+ </div>
+
+</div>
+
+`)
+.join("");
+
+}
+
+
+/* =====================================================
+   HOME
+===================================================== */
+
+function renderHome(){
+
+ document
+  .getElementById("homeCases")
+  .innerHTML =
+
+  db.cases
+   .slice()
+   .reverse()
+   .slice(0,3)
+   .map(c => `
+
+<div
+ class="case clickable-card"
+ onclick="detail('${c.id}')">
+
+ <b>
+  ${esc(c.no)}
+  ·
+  ${esc(c.name)}
+ </b>
+
+ <span class="badge">
+  ${esc(c.status)}
+ </span>
+
+
+ <div
+  class="sub"
+  style="margin-top:6px">
+
+  ${esc(c.family)}
+  ·
+  ${esc(c.region)}
+
+ </div>
+
+</div>
+
+`)
+.join("")
+
+ ||
+
+ "<div class='empty'>사건 없음</div>";
+
+}
+
+
+/* =====================================================
+   DETAIL
+===================================================== */
+
+function detail(id){
+
+ const c =
+  db.cases.find(
+   x => x.id === id
+  );
+
+
+ if(!c)return;
+
+
+ const cs =
+  db.consultations.filter(
+   x => x.caseId === id
+  );
+
+
+ const d =
+  db.deaths.find(
+   x => x.caseId === id
+  );
+
+
+ const ts =
+  db.todos.filter(
+   x => x.caseId === id
+  );
+
+
+ document
+  .getElementById("detailContent")
+  .innerHTML = `
+
+<h1>${esc(c.no)}</h1>
+
+<div class="sub">
+ ${esc(c.name)} 유가족
+</div>
+
+
+<div class="box">
+
+ <h2>👤 기본정보</h2>
+
+
+ <div class="item">
+
+  <b>고인</b><br>
+  ${esc(c.name)}
+
+ </div>
+
+
+ <div class="item">
+
+  <b>유가족</b><br>
+  ${esc(c.family)}
+
+ </div>
+
+
+ <div class="item">
+
+  <b>거주지역</b><br>
+  ${esc(c.region)}
+
+ </div>
+
+
+ <div class="item">
+
+  <b>현재상태</b><br>
+  ${esc(c.status)}
+
+ </div>
+
+</div>
+
+
+<div class="box">
+
+ <h2>⚰️ 사망정보</h2>
+
+
+ ${
+  d
+
+  ?
+
+  `
+
+<div class="item">
+
+ <b>사망일</b><br>
+ ${esc(d.deathDate||"미입력")}
+
+ <br><br>
+
+ <b>사망확인일</b><br>
+ ${esc(d.confirmDate||"미입력")}
+
+ <br><br>
+
+ <b>구분</b><br>
+ ${esc(d.type)}
+
+ <br><br>
+
+ <b>조치사항</b><br>
+ ${esc(d.action||"없음")}
+
+ <br><br>
+
+ <b>조치상태</b><br>
+ ${esc(d.status)}
+
+</div>
+
+
+<button
+ class="secondary"
+ onclick="editDeath('${d.id}')">
+
+ 사망정보 수정
+
+</button>
+
+`
+
+  :
+
+  "<div class='empty'>사망정보가 없습니다.</div>"
+
+ }
+
+</div>
+
+
+<div class="box">
+
+ <h2>📞 상담이력</h2>
+
+
+ ${
+  cs.length
+
+  ?
+
+  cs
+   .slice()
+   .reverse()
+   .map(x => `
+
+<div class="item">
+
+ <b>
+  ${esc(x.method)}
+  ·
+  ${esc(x.dateTime||"")}
+ </b>
+
+
+ <br><br>
+
+ ${esc(x.text)}
+
+
+ ${
+  x.result
+
+  ?
+
+  `<br><br>
+   <b>상담결과</b><br>
+   ${esc(x.result)}`
+
+  :
+
+  ""
+ }
+
+
+ ${
+  x.follow
+
+  ?
+
+  `<br><br>
+   <b>후속조치</b><br>
+   ${esc(x.follow)}`
+
+  :
+
+  ""
+ }
+
+</div>
+
+`)
+.join("")
+
+  :
+
+  "<div class='empty'>상담기록 없음</div>"
+
+ }
+
+</div>
+
+
+<div class="box">
+
+ <h2>✅ 후속조치</h2>
+
+
+ ${
+  ts.length
+
+  ?
+
+  ts
+   .map(x => `
+
+<div class="item">
+
+ <b>
+  ${x.done ? "✅" : "⬜"}
+  ${esc(x.text)}
+ </b>
+
+ <br>
+
+ ${esc(x.date||"기한 없음")}
+
+</div>
+
+`)
+.join("")
+
+  :
+
+  "<div class='empty'>후속조치 없음</div>"
+
+ }
+
+</div>
+
+
+<div class="row">
+
+ <button
+  onclick="prepareConsult('${c.id}')">
+
+  📞 상담등록
+
+ </button>
+
+
+ <button
+  class="orange"
+  onclick="openDeathForCase('${c.id}')">
+
+  ⚰️ 사망관리
+
+ </button>
+
+</div>
+
+
+<div style="height:7px"></div>
+
+
+<div class="row">
+
+ <button
+  class="secondary"
+  onclick="prepareReport('${c.id}')">
+
+  📝 보고서
+
+ </button>
+
+
+ <button
+  class="secondary"
+  onclick="openAIForCase('${c.id}')">
+
+  🤖 AI 상담
+
+ </button>
+
+</div>
+
+`;
+
+
+ go("detail");
+
+}
+
+
+/* =====================================================
+   SELECT
+===================================================== */
+
+function fillSelects(){
+
+ const options =
+  db.cases
+   .map(c => `
+
+<option value="${esc(c.id)}">
+
+ ${esc(c.no)}
+ ·
+ ${esc(c.name)}
+
+</option>
+
+`)
+.join("");
+
+
+ [
+  "consultCase",
+  "reportCase",
+  "todoCase",
+  "deathCase"
+ ]
+ .forEach(id => {
+
+  const el =
+   document.getElementById(id);
+
+
+  if(el){
+
+   el.innerHTML =
+    options ||
+    "<option value=''>사건 없음</option>";
+
+  }
+
+ });
+
+}
+
+
+/* =====================================================
+   DEATH
+===================================================== */
+
+function openDeath(){
+
+ fillSelects();
+
+ document
+  .getElementById("deathModal")
+  .dataset.edit="";
+
+ openModal("deathModal");
+
+}
+
+
+function openDeathForCase(id){
+
+ openDeath();
+
+ document
+  .getElementById("deathCase")
+  .value=id;
+
+}
+
+
+function editDeath(id){
+
+ const d =
+  db.deaths.find(
+   x => x.id === id
+  );
+
+
+ if(!d)return;
+
+
+ fillSelects();
+
+
+ document
+  .getElementById("deathCase")
+  .value=d.caseId;
+
+
+ document
+  .getElementById("deathDate")
+  .value=d.deathDate||"";
+
+
+ document
+  .getElementById("deathConfirmDate")
+  .value=d.confirmDate||"";
+
+
+ document
+  .getElementById("deathType")
+  .value=d.type||"일반 사망";
+
+
+ document
+  .getElementById("deathAction")
+  .value=d.action||"";
+
+
+ document
+  .getElementById("deathStatus")
+  .value=d.status||"확인 필요";
+
+
+ document
+  .getElementById("deathMemo")
+  .value=d.memo||"";
+
+
+ document
+  .getElementById("deathModal")
+  .dataset.edit=id;
+
+
+ openModal("deathModal");
+
+}
+
+
+function saveDeath(){
+
+ const caseId =
+  document
+   .getElementById("deathCase")
+   .value;
+
+
+ if(!caseId){
+
+  alert(
+   "사건을 선택해주세요."
+  );
+
+  return;
+
+ }
+
+
+ const data={
+
+  caseId,
+
+  deathDate:
+   document
+    .getElementById("deathDate")
+    .value,
+
+  confirmDate:
+   document
+    .getElementById("deathConfirmDate")
+    .value,
+
+  type:
+   document
+    .getElementById("deathType")
+    .value,
+
+  action:
+   document
+    .getElementById("deathAction")
+    .value
+    .trim(),
+
+  status:
+   document
+    .getElementById("deathStatus")
+    .value,
+
+  memo:
+   document
+    .getElementById("deathMemo")
+    .value
+    .trim()
+
+ };
+
+
+ const editId =
+  document
+   .getElementById("deathModal")
+   .dataset.edit;
+
+
+ if(editId){
+
+  const d =
+   db.deaths.find(
+    x => x.id === editId
+   );
+
+
+  Object.assign(
+   d,
+   data
+  );
+
+
+  addLog(
+   "사망정보 수정",
+   caseId
+  );
+
+ }else{
+
+  db.deaths.push({
+
+   id:"d"+Date.now(),
+
+   ...data
+
+  });
+
+
+  addLog(
+   "사망정보 등록",
+   caseId
+  );
+
+ }
+
+
+ saveDB();
+
+ closeModal("deathModal");
+
+ refresh();
+
+
+ alert(
+  "사망정보가 저장되었습니다."
+ );
+
+}
+
+
+function renderDeaths(){
+
+ const el =
+  document.getElementById(
+   "deathList"
+  );
+
+
+ el.innerHTML =
+  db.deaths.length
+
+  ?
+
+  db.deaths
+   .slice()
+   .reverse()
+   .map(d => {
+
+    const c =
+     db.cases.find(
+      x => x.id === d.caseId
+     );
+
+
+    return `
+
+<div class="case">
+
+ <b>
+
+  ${c ? esc(c.no) : ""}
+  ·
+  ${c ? esc(c.name) : ""}
+
+ </b>
+
+
+ <br><br>
+
+ 사망일:
+ ${esc(d.deathDate||"미입력")}
+
+ <br>
+
+ 구분:
+ ${esc(d.type)}
+
+ <br>
+
+ 조치:
+ ${esc(d.action||"없음")}
+
+ <br><br>
+
+
+ <span
+  class="badge ${
+   d.status==="조치 완료"
+    ?"green":
+   d.status==="조치 진행중"
+    ?"orange":
+   "red"
+  }">
+
+  ${esc(d.status)}
+
+ </span>
+
+
+ <br><br>
+
+
+ <button
+  onclick="editDeath('${d.id}')">
+
+  수정
+
+ </button>
+
+
+ <button
+  class="secondary"
+  onclick="detail('${d.caseId}')">
+
+  사건보기
+
+ </button>
+
+</div>
+
+`;
+
+   })
+   .join("")
+
+  :
+
+  "<div class='empty'>등록된 사망정보가 없습니다.</div>";
+
+}
+
+
+/* =====================================================
+   상담 준비
+===================================================== */
+
+function prepareConsult(id){
+
+ fillSelects();
+
+
+ document
+  .getElementById("consultCase")
+  .value=id;
+
+
+ const now =
+  new Date();
+
+
+ const local =
+  new Date(
+   now.getTime() -
+   now.getTimezoneOffset()*60000
+  )
+  .toISOString()
+  .slice(0,16);
+
+
+ document
+  .getElementById("consultDateTime")
+  .value=local;
+
+
+ clearConsultAudio();
+
+
+ document
+  .getElementById("consultText")
+  .value="";
+
+
+ document
+  .getElementById("consultResult")
+  .value="";
+
+
+ document
+  .getElementById("consultFollow")
+  .value="";
+
+
+ go("consult");
+
+}
+
+
+function clearConsultAudio(){
+
+ window.currentAudioFile=null;
+
+
+ const fileInput =
+  document
+   .getElementById("audioFile");
+
+
+ if(fileInput){
+
+  fileInput.value="";
+
+ }
+
+
+ const audio =
+  document
+   .getElementById("audioPreview");
+
+
+ if(audio){
+
+  audio.removeAttribute("src");
+
+  audio.classList.add(
+   "hidden"
+  );
+
+ }
+
+
+ const info =
+  document
+   .getElementById("audioFileInfo");
+
+
+ if(info){
+
+  info.innerHTML="";
+
+ }
+
+
+ const status =
+  document
+   .getElementById("transcribeStatus");
+
+
+ if(status){
+
+  status.innerHTML="";
+
+ }
+
+
+ const button =
+  document
+   .getElementById("transcribeBtn");
+
+
+ if(button){
+
+  button.disabled=true;
+
+ }
+
+}
+
+
+/* =====================================================
+   상담 저장
+===================================================== */
+
+function saveConsult(){
+
+ const caseId =
+  document
+   .getElementById("consultCase")
+   .value;
+
+
+ const text =
+  document
+   .getElementById("consultText")
+   .value
+   .trim();
+
+
+ if(!caseId || !text){
+
+  alert(
+   "사건과 상담내용을 입력해주세요."
+  );
+
+  return;
+
+ }
+
+
+ const item={
+
+  id:"m"+Date.now(),
+
+  caseId,
+
+  method:
+   document
+    .getElementById("consultMethod")
+    .value,
+
+  dateTime:
+   document
+    .getElementById("consultDateTime")
+    .value,
+
+  text,
+
+  result:
+   document
+    .getElementById("consultResult")
+    .value
+    .trim(),
+
+  follow:
+   document
+    .getElementById("consultFollow")
+    .value
+    .trim(),
+
+  user:
+   session.name
+
+ };
+
+
+ db.consultations.push(item);
+
+
+ if(item.follow){
+
+  db.todos.push({
+
+   id:"t"+Date.now(),
+
+   caseId,
+
+   text:item.follow,
+
+   date:
+    new Date()
+     .toISOString()
+     .slice(0,10),
+
+   done:false
+
+  });
+
+ }
+
+
+ addLog(
+  "상담 등록",
+  caseId
+ );
+
+
+ saveDB();
+
+
+ alert(
+  "상담기록이 저장되었습니다."
+ );
+
+
+ document
+  .getElementById("consultText")
+  .value="";
+
+
+ document
+  .getElementById("consultResult")
+  .value="";
+
+
+ document
+  .getElementById("consultFollow")
+  .value="";
+
+
+ clearConsultAudio();
+
+
+ refresh();
+
+}
+
+
+/* =====================================================
+   CONSULT RENDER
+===================================================== */
+
+function renderConsults(){
+
+ const el =
+  document.getElementById(
+   "consultList"
+  );
+
+
+ if(!db.consultations.length){
+
+  el.innerHTML =
+   "<div class='empty'>상담기록이 없습니다.</div>";
+
+  return;
+
+ }
+
+
+ el.innerHTML =
+  db.consultations
+   .slice()
+   .reverse()
+   .map(x => {
+
+    const c =
+     db.cases.find(
+      c => c.id === x.caseId
+     );
+
+
+    return `
+
+<div class="item">
+
+ <b>
+
+  ${esc(x.method)}
+  ·
+  ${esc(x.dateTime)}
+  ·
+  ${c ? esc(c.no) : ""}
+
+ </b>
+
+
+ <br><br>
+
+ ${esc(x.text)}
+
+
+ ${
+  x.result
+
+  ?
+
+  `<br><br>
+   <b>결과:</b>
+   ${esc(x.result)}`
+
+  :
+
+  ""
+ }
+
+
+ ${
+  x.follow
+
+  ?
+
+  `<br>
+   <b>후속조치:</b>
+   ${esc(x.follow)}`
+
+  :
+
+  ""
+ }
+
+
+ <br><br>
+
+
+ <button
+  class="secondary"
+  onclick="
+   openAIFromText(
+    '${encodeURIComponent(x.text)}'
+   )
+  ">
+
+  🤖 AI 상담
+
+ </button>
+
+</div>
+
+`;
+
+   })
+   .join("");
+
+}
+
+
+/* =====================================================
+   AI
+===================================================== */
+
+function openAI(){
+
+ const text =
+  document
+   .getElementById("aiText")
+   .value
+   .trim();
+
+
+ if(!text){
+
+  alert(
+   "AI에게 질문할 내용을 입력해주세요."
+  );
+
+  return;
+
+ }
+
+
+ const provider =
+  document
+   .getElementById("aiProvider")
+   .value;
+
+
+ const prompt =
+`유가족지원 업무를 지원하는 담당자입니다.
+
+다음 상담내용을 업무적으로 분석해주세요.
+
+상담내용:
+${text}
+
+다음 항목으로 답변해주세요.
+
+1. 상담 요약
+2. 주요 요구사항
+3. 필요한 지원사항
+4. 후속조치
+5. 추가 확인사항
+6. 주의사항`;
+
+
+ let url;
+
+
+ if(provider==="chatgpt"){
+
+  url =
+   "https://chatgpt.com/?q="+
+   encodeURIComponent(prompt);
+
+ }else{
+
+  url =
+   "https://gemini.google.com/app?q="+
+   encodeURIComponent(prompt);
+
+ }
+
+
+ addLog(
+  "외부 AI 상담 연결",
+  provider
+ );
+
+
+ window.open(
+  url,
+  "_blank"
+ );
+
+}
+
+
+function openAIFromText(encoded){
+
+ document
+  .getElementById("aiText")
+  .value =
+  decodeURIComponent(encoded);
+
+
+ go("ai");
+
+}
+
+
+function openAIForCase(id){
+
+ const cs =
+  db.consultations.filter(
+   x => x.caseId === id
+  );
+
+
+ document
+  .getElementById("aiText")
+  .value =
+
+  cs.length
+
+  ?
+
+  cs
+   .map(x => x.text)
+   .join("\n\n")
+
+  :
+
+  "이 사건의 유가족에게 필요한 지원사항과 후속조치를 분석해주세요.";
+
+
+ go("ai");
+
+}
+
+
+function analyzeConsult(){
+
+ const text =
+  document
+   .getElementById("consultText")
+   .value
+   .trim();
+
+
+ if(!text){
+
+  alert(
+   "상담내용을 먼저 입력해주세요."
+  );
+
+  return;
+
+ }
+
+
+ document
+  .getElementById("aiText")
+  .value=text;
+
+
+ go("ai");
+
+}
+
+
+/* =====================================================
+   TODO
+===================================================== */
+
+function openTodo(){
+
+ fillSelects();
+
+
+ document
+  .getElementById("todoText")
+  .value="";
+
+
+ document
+  .getElementById("todoDate")
+  .value="";
+
+
+ openModal("todoModal");
+
+}
+
+
+function saveTodo(){
+
+ const caseId =
+  document
+   .getElementById("todoCase")
+   .value;
+
+
+ const text =
+  document
+   .getElementById("todoText")
+   .value
+   .trim();
+
+
+ if(!caseId || !text){
+
+  alert(
+   "사건과 할 일을 입력해주세요."
+  );
+
+  return;
+
+ }
+
+
+ db.todos.push({
+
+  id:"t"+Date.now(),
+
+  caseId,
+
+  text,
+
+  date:
+   document
+    .getElementById("todoDate")
+    .value,
+
+  done:false
+
+ });
+
+
+ addLog(
+  "후속조치 등록",
+  text
+ );
+
+
+ saveDB();
+
+ closeModal("todoModal");
+
+ refresh();
+
+}
+
+
+function completeTodo(id){
+
+ const x =
+  db.todos.find(
+   x => x.id === id
+  );
+
+
+ if(x){
+
+  x.done=true;
+
+
+  addLog(
+   "후속조치 완료",
+   x.text
+  );
+
+
+  saveDB();
+
+  refresh();
+
+ }
+
+}
+
+
+function renderTodos(){
+
+ const el =
+  document.getElementById(
+   "todoList"
+  );
+
+
+ el.innerHTML =
+  db.todos.length
+
+  ?
+
+  db.todos
+   .map(x => {
+
+    const c =
+     db.cases.find(
+      c => c.id === x.caseId
+     );
+
+
+    return `
+
+<div class="item">
+
+ <b>
+
+  ${x.done ? "✅" : "⬜"}
+  ${esc(x.text)}
+
+ </b>
+
+
+ <br>
+
+ ${c ? esc(c.no) : ""}
+
+ ·
+
+ ${esc(x.date||"기한 없음")}
+
+
+ <br><br>
+
+
+ ${
+  x.done
+
+  ?
+
+  "<span class='badge green'>완료</span>"
+
+  :
+
+  `
+
+<button
+ class="green"
+ onclick="completeTodo('${x.id}')">
+
+ 완료처리
+
+</button>
+
+`
+
+ }
+
+</div>
+
+`;
+
+   })
+   .join("")
+
+  :
+
+  "<div class='empty'>후속조치가 없습니다.</div>";
+
+}
+
+
+/* =====================================================
+   REPORT
+===================================================== */
+
+function prepareReport(id){
+
+ fillSelects();
+
+
+ document
+  .getElementById("reportCase")
+  .value=id;
+
+
+ const cs =
+  db.consultations.filter(
+   x => x.caseId === id
+  );
+
+
+ document
+  .getElementById("reportText")
+  .value =
+
+  cs
+   .map(x =>
+`[${x.method}]
+${x.text}
+
+상담결과:
+${x.result||""}
+
+후속조치:
+${x.follow||""}`
+   )
+   .join("\n\n");
+
+
+ go("report");
+
+}
+
+
+function openAIReport(){
+
+ const text =
+  document
+   .getElementById("reportText")
+   .value
+   .trim();
+
+
+ if(!text){
+
+  alert(
+   "상담내용을 입력해주세요."
+  );
+
+  return;
+
+ }
+
+
+ document
+  .getElementById("aiText")
+  .value =
+
+`다음 유가족 상담기록을 바탕으로 업무용 보고서 초안을 작성해주세요.
+
+구성:
+1. 상담 개요
+2. 주요 상담내용
+3. 유가족 요구사항
+4. 현재 지원상황
+5. 필요한 후속조치
+6. 추가 확인사항
+7. 담당자 참고사항
+
+상담기록:
+${text}`;
+
+
+ go("ai");
+
+}
+
+
+/* =====================================================
+   SEARCH
+===================================================== */
+
+function searchAll(){
+
+ const q =
+  document
+   .getElementById("globalSearch")
+   .value
+   .trim()
+   .toLowerCase();
+
+
+ if(!q){
+
+  renderCases();
+
+  return;
+
+ }
+
+
+ const result =
+  db.cases.filter(c => {
+
+   const d =
+    db.deaths.find(
+     x => x.caseId === c.id
+    );
+
+
+   const cs =
+    db.consultations
+     .filter(
+      x => x.caseId === c.id
+     )
+     .map(
+      x =>
+       x.text+
+       " "+
+       x.result+
+       " "+
+       x.follow
+     )
+     .join(" ");
+
+
+   const ts =
+    db.todos
+     .filter(
+      x => x.caseId === c.id
+     )
+     .map(
+      x => x.text
+     )
+     .join(" ");
+
+
+   return [
+
+    c.no,
+    c.name,
+    c.family,
+    c.region,
+    c.status,
+    JSON.stringify(d||{}),
+    cs,
+    ts
+
+   ]
+   .join(" ")
+   .toLowerCase()
+   .includes(q);
+
+  });
+
+
+ document
+  .getElementById("caseList")
+  .innerHTML =
+
+  result.length
+
+  ?
+
+  result
+   .map(c => `
+
+<div class="case">
+
+ <b>
+
+  ${esc(c.no)}
+  ·
+  ${esc(c.name)}
+
+ </b>
+
+
+ <div class="sub">
+
+  ${esc(c.family)}
+  ·
+  ${esc(c.region)}
+
+ </div>
+
+
+ <button
+  onclick="detail('${c.id}')">
+
+  열람
+
+ </button>
+
+</div>
+
+`)
+.join("")
+
+  :
+
+  "<div class='empty'>검색 결과가 없습니다.</div>";
+
+
+ addLog(
+  "통합검색",
+  q
+ );
+
+}
+
+
+function searchCases(){
+
+ const q =
+  document
+   .getElementById("caseSearch")
+   .value
+   .trim()
+   .toLowerCase();
+
+
+ if(!q){
+
+  document
+   .getElementById("searchResult")
+   .innerHTML="";
+
+  return;
+
+ }
+
+
+ const result =
+  db.cases.filter(c => {
+
+   const d =
+    db.deaths.find(
+     x => x.caseId === c.id
+    );
+
+
+   const cs =
+    db.consultations
+     .filter(
+      x => x.caseId === c.id
+     )
+     .map(
+      x => JSON.stringify(x)
+     )
+     .join(" ");
+
+
+   const ts =
+    db.todos
+     .filter(
+      x => x.caseId === c.id
+     )
+     .map(
+      x => JSON.stringify(x)
+     )
+     .join(" ");
+
+
+   return (
+
+    JSON.stringify(c)
+     .toLowerCase()
+     .includes(q)
+
+    ||
+
+    JSON.stringify(d||{})
+     .toLowerCase()
+     .includes(q)
+
+    ||
+
+    cs
+     .toLowerCase()
+     .includes(q)
+
+    ||
+
+    ts
+     .toLowerCase()
+     .includes(q)
+
+   );
+
+  });
+
+
+ document
+  .getElementById("searchResult")
+  .innerHTML = `
+
+<div class="box">
+
+ <h2>
+  검색결과 ${result.length}건
+ </h2>
+
+
+ ${
+  result
+   .map(c => `
+
+<div class="item">
+
+ <b>
+
+  ${esc(c.no)}
+  ·
+  ${esc(c.name)}
+
+ </b>
+
+
+ <br>
+
+ ${esc(c.family)}
+ ·
+ ${esc(c.region)}
+
+
+ <br><br>
+
+
+ <button
+  onclick="detail('${c.id}')">
+
+  사건 열람
+
+ </button>
+
+</div>
+
+`)
+.join("")
+
+ ||
+
+ "<div class='empty'>검색 결과가 없습니다.</div>"
+
+ }
+
+</div>
+
+`;
+
+
+ addLog(
+  "사례검색",
+  q
+ );
+
+}
+
+
+/* =====================================================
+   ADMIN
+===================================================== */
+
+function renderAdmin(){
+
+ const el =
+  document.getElementById(
+   "userList"
+  );
+
+
+ if(
+  !session ||
+  session.role !== "ADMIN"
+ ){
+
+  el.innerHTML =
+   "<div class='empty'>관리자만 이용할 수 있습니다.</div>";
+
+  return;
+
+ }
+
+
+ el.innerHTML =
+  db.users
+   .map(u => `
+
+<div class="item">
+
+ <b>
+
+  ${esc(u.name)}
+  ·
+  ${esc(u.loginId)}
+
+ </b>
+
+
+ <br>
+
+
+ ${esc(u.organization)}
+ ·
+ ${esc(u.rank)}
+ ·
+ ${esc(u.phone)}
+
+
+ <br><br>
+
+
+ <span
+  class="badge ${
+   u.status==="APPROVED"
+    ?"green":
+   u.status==="PENDING"
+    ?"orange":
+   "red"
+  }">
+
+  ${esc(u.status)}
+
+ </span>
+
+
+ <br><br>
+
+
+ ${
+  u.status==="PENDING"
+
+  ?
+
+  `<button
+    class="green"
+    onclick="approveUser(${u.id})">
+
+    승인
+
+   </button>`
+
+  :
+
+  ""
+
+ }
+
+
+ ${
+  u.status==="APPROVED" &&
+  u.role!=="ADMIN"
+
+  ?
+
+  `<button
+    class="red"
+    onclick="blockUser(${u.id})">
+
+    차단
+
+   </button>`
+
+  :
+
+  ""
+
+ }
+
+</div>
+
+`)
+.join("");
+
+}
+
+
+function approveUser(id){
+
+ const u =
+  db.users.find(
+   x => x.id === id
+  );
+
+
+ if(!u)return;
+
+
+ u.status="APPROVED";
+
+
+ addLog(
+  "사용자 승인",
+  u.loginId
+ );
+
+
+ db.notifications.unshift(
+  `${u.name} 사용자가 승인되었습니다.`
+ );
+
+
+ saveDB();
+
+ refresh();
+
+
+ alert(
+  "승인되었습니다."
+ );
+
+}
+
+
+function blockUser(id){
+
+ const u =
+  db.users.find(
+   x => x.id === id
+  );
+
+
+ if(!u)return;
+
+
+ if(
+  !confirm(
+   `${u.name} 사용자를 차단하시겠습니까?`
+  )
+ ){
+
+  return;
+
+ }
+
+
+ u.status="BLOCKED";
+
+
+ addLog(
+  "사용자 차단",
+  u.loginId
+ );
+
+
+ saveDB();
+
+ refresh();
+
+}
+
+
+/* =====================================================
+   LOG / NOTICE
+===================================================== */
+
+function renderLogs(){
+
+ if(
+  !session ||
+  session.role!=="ADMIN"
+ ){
+
+  return;
+
+ }
+
+
+ document
+  .getElementById("logList")
+  .innerHTML =
+
+  db.logs
+   .slice()
+   .reverse()
+   .map(x => `
+
+<tr>
+
+ <td>
+  ${esc(x.time)}
+ </td>
+
+ <td>
+  ${esc(x.user)}
+ </td>
+
+ <td>
+  ${esc(x.action)}
+ </td>
+
+ <td>
+  ${esc(x.target)}
+ </td>
+
+</tr>
+
+`)
+.join("");
+
+}
+
+
+function renderNotifications(){
+
+ document
+  .getElementById("notifications")
+  .innerHTML =
+
+  db.notifications
+   .slice(0,5)
+   .map(x => `
+
+<div class="item">
+ 🔔 ${esc(x)}
+</div>
+
+`)
+.join("");
+
+}
+
+
+/* =====================================================
+   REFRESH
+===================================================== */
+
+function refresh(){
+
+ if(!session)return;
+
+
+ document
+  .getElementById("cntCase")
+  .textContent =
+  db.cases.length;
+
+
+ document
+  .getElementById("cntConsult")
+  .textContent =
+  db.consultations.length;
+
+
+ document
+  .getElementById("cntTodo")
+  .textContent =
+  db.todos.filter(
+   x => !x.done
+  ).length;
+
+
+ document
+  .getElementById("cntDone")
+  .textContent =
+  db.todos.filter(
+   x => x.done
+  ).length;
+
+
+ renderHome();
+
+ renderCases();
+
+ renderDeaths();
+
+ renderConsults();
+
+ renderTodos();
+
+ renderAdmin();
+
+ renderLogs();
+
+ renderNotifications();
+
+ fillSelects();
+
+ updateDemoAccountInfo();
+
+}
+
+
+/* =====================================================
+   MODAL BACKGROUND
+===================================================== */
+
+document
+ .querySelectorAll(".modal")
+ .forEach(modal => {
+
+  modal.addEventListener(
+   "click",
+   e => {
+
+    if(e.target === modal){
+
+     modal.classList.remove(
+      "show"
+     );
+
     }
 
-    // 데모 테스트용 초기화 함수 (우측 상단 '초기화' 버튼 클릭 시 실행)
-    function resetDemo() {
-      localStorage.removeItem("isFirstLogin");
-      localStorage.removeItem("userName");
-      location.reload();
+   }
+  );
+
+ });
+
+
+/* =====================================================
+   START
+===================================================== */
+
+showSecurity();
+
+updateDemoAccountInfo();
+
+
+if(session){
+
+ startApp();
+
+}else{
+
+ document
+  .getElementById("loginScreen")
+  .classList.remove("hidden");
+
+
+ document
+  .getElementById("app")
+  .classList.add("hidden");
+
+}
+
+</script>
+
+
+<!-- =====================================================
+     Whisper 음성파일 문자변환
+===================================================== -->
+
+<script type="module">
+
+import {
+ pipeline
+}
+from
+"https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1";
+
+
+/* =====================================================
+   전역 상태
+===================================================== */
+
+let whisperTranscriber = null;
+
+let selectedAudioFile = null;
+
+let whisperLoading = false;
+
+
+/* =====================================================
+   음성파일 선택
+===================================================== */
+
+window.selectAudioFile =
+function(event){
+
+ const file =
+  event.target.files?.[0];
+
+
+ if(!file){
+
+  selectedAudioFile=null;
+
+  document
+   .getElementById(
+    "transcribeBtn"
+   )
+   .disabled=true;
+
+  document
+   .getElementById(
+    "audioFileInfo"
+   )
+   .innerHTML="";
+
+  document
+   .getElementById(
+    "audioPreview"
+   )
+   .classList.add("hidden");
+
+  return;
+
+ }
+
+
+ selectedAudioFile=file;
+
+
+ const sizeMB =
+  (
+   file.size /
+   1024 /
+   1024
+  ).toFixed(2);
+
+
+ document
+  .getElementById(
+   "audioFileInfo"
+  )
+  .innerHTML = `
+
+<div class="item">
+
+ <b>🎧 선택된 파일</b>
+
+ <br><br>
+
+ 파일명:
+ ${escapeHtml(file.name)}
+
+ <br>
+
+ 크기:
+ ${sizeMB} MB
+
+ <br>
+
+ 형식:
+ ${escapeHtml(
+  file.type ||
+  "알 수 없음"
+ )}
+
+</div>
+
+`;
+
+
+ const audio =
+  document.getElementById(
+   "audioPreview"
+  );
+
+
+ const url =
+  URL.createObjectURL(file);
+
+
+ audio.src=url;
+
+ audio.classList.remove(
+  "hidden"
+ );
+
+
+ document
+  .getElementById(
+   "transcribeBtn"
+  )
+  .disabled=false;
+
+
+ document
+  .getElementById(
+   "transcribeStatus"
+  )
+  .innerHTML = `
+
+<div class="notice">
+
+ 파일이 준비되었습니다.
+
+ <br><br>
+
+ <b>
+  🎧 녹음파일 문자변환
+ </b>
+
+ 버튼을 눌러주세요.
+
+</div>
+
+`;
+
+};
+
+
+/* =====================================================
+   Whisper 모델
+===================================================== */
+
+async function loadWhisper(){
+
+ if(whisperTranscriber){
+
+  return whisperTranscriber;
+
+ }
+
+
+ if(whisperLoading){
+
+  while(whisperLoading){
+
+   await new Promise(
+    resolve =>
+     setTimeout(
+      resolve,
+      300
+     )
+   );
+
+  }
+
+
+  return whisperTranscriber;
+
+ }
+
+
+ whisperLoading=true;
+
+
+ try{
+
+  document
+   .getElementById(
+    "transcribeStatus"
+   )
+   .innerHTML = `
+
+<div class="transcribing">
+
+ 🤖 음성인식 AI를 준비하고 있습니다.
+
+ <br><br>
+
+ 처음 사용하는 경우
+ 음성인식 모델을 다운로드하기 때문에
+ 시간이 걸릴 수 있습니다.
+
+</div>
+
+`;
+
+
+  /*
+   * 우선 WebGPU 사용을 시도하고
+   * 문제가 있으면 WASM으로 다시 시도합니다.
+   */
+
+  if(
+   navigator.gpu
+  ){
+
+   try{
+
+    whisperTranscriber =
+     await pipeline(
+      "automatic-speech-recognition",
+      "onnx-community/whisper-tiny",
+      {
+       device:"webgpu"
+      }
+     );
+
+
+    return whisperTranscriber;
+
+   }catch(webgpuError){
+
+    console.warn(
+     "WebGPU 실패. WASM으로 전환합니다.",
+     webgpuError
+    );
+
+
+    whisperTranscriber=null;
+
+   }
+
+  }
+
+
+  whisperTranscriber =
+   await pipeline(
+    "automatic-speech-recognition",
+    "onnx-community/whisper-tiny",
+    {
+     device:"wasm"
     }
-  </script>
+   );
+
+
+  return whisperTranscriber;
+
+
+ }finally{
+
+  whisperLoading=false;
+
+ }
+
+}
+
+
+/* =====================================================
+   Audio 파일 디코딩
+===================================================== */
+
+async function decodeAudioFile(file){
+
+ const arrayBuffer =
+  await file.arrayBuffer();
+
+
+ const AudioContextClass =
+  window.AudioContext ||
+  window.webkitAudioContext;
+
+
+ if(!AudioContextClass){
+
+  throw new Error(
+   "현재 브라우저에서 AudioContext를 사용할 수 없습니다."
+  );
+
+ }
+
+
+ const context =
+  new AudioContextClass();
+
+
+ try{
+
+  const decoded =
+   await context.decodeAudioData(
+    arrayBuffer
+   );
+
+
+  /*
+   * Whisper 입력은 16kHz mono.
+   */
+
+  const targetRate=16000;
+
+
+  const sourceLength =
+   decoded.length;
+
+
+  const sourceRate =
+   decoded.sampleRate;
+
+
+  const duration =
+   decoded.duration;
+
+
+  const targetLength =
+   Math.ceil(
+    duration *
+    targetRate
+   );
+
+
+  const mono =
+   new Float32Array(
+    targetLength
+   );
+
+
+  /*
+   * 여러 채널을 mono로 합칩니다.
+   */
+
+  for(
+   let channel=0;
+   channel<
+   decoded.numberOfChannels;
+   channel++
+  ){
+
+   const data =
+    decoded.getChannelData(
+     channel
+    );
+
+
+   for(
+    let i=0;
+    i<targetLength;
+    i++
+   ){
+
+    const position =
+     i *
+     sourceRate /
+     targetRate;
+
+
+    const index =
+     Math.floor(position);
+
+
+    const next =
+     Math.min(
+      index+1,
+      sourceLength-1
+     );
+
+
+    const fraction =
+     position-index;
+
+
+    const sample =
+     data[index] *
+     (1-fraction)
+     +
+     data[next] *
+     fraction;
+
+
+    mono[i] +=
+     sample /
+     decoded.numberOfChannels;
+
+   }
+
+  }
+
+
+  return mono;
+
+
+ }finally{
+
+  try{
+
+   await context.close();
+
+  }catch(e){}
+
+ }
+
+}
+
+
+/* =====================================================
+   녹음파일 → 문자
+===================================================== */
+
+window.transcribeSelectedAudio =
+async function(){
+
+ if(!selectedAudioFile){
+
+  alert(
+   "먼저 녹음파일을 선택해주세요."
+  );
+
+  return;
+
+ }
+
+
+ const button =
+  document.getElementById(
+   "transcribeBtn"
+  );
+
+
+ button.disabled=true;
+
+
+ try{
+
+  /*
+   * 1. 파일 확인
+   */
+
+  document
+   .getElementById(
+    "transcribeStatus"
+   )
+   .innerHTML = `
+
+<div class="transcribing">
+
+ 🎧 음성파일을 읽고 있습니다.
+
+ <br><br>
+
+ 잠시 기다려주세요.
+
+</div>
+
+`;
+
+
+  /*
+   * 2. Audio → 16kHz mono
+   */
+
+  const audioData =
+   await decodeAudioFile(
+    selectedAudioFile
+   );
+
+
+  /*
+   * 3. Whisper 준비
+   */
+
+  const transcriber =
+   await loadWhisper();
+
+
+  /*
+   * 4. 실제 음성인식
+   */
+
+  document
+   .getElementById(
+    "transcribeStatus"
+   )
+   .innerHTML = `
+
+<div class="transcribing">
+
+ 🤖 AI가 녹음된 음성을
+ 문자로 변환하고 있습니다.
+
+ <br><br>
+
+ 녹음시간이 길수록
+ 처리시간이 길어질 수 있습니다.
+
+</div>
+
+`;
+
+
+  const result =
+   await transcriber(
+    audioData,
+    {
+     language:"korean",
+     task:"transcribe",
+
+     chunk_length_s:30,
+
+     stride_length_s:5
+    }
+   );
+
+
+  const text =
+   String(
+    result?.text || ""
+   )
+   .trim();
+
+
+  if(!text){
+
+   throw new Error(
+    "음성에서 문장을 인식하지 못했습니다."
+   );
+
+  }
+
+
+  /*
+   * 5. 기존 상담내용과 합치기
+   */
+
+  const textarea =
+   document.getElementById(
+    "consultText"
+   );
+
+
+  if(
+   textarea.value.trim()
+  ){
+
+   textarea.value +=
+    "\n\n" +
+    text;
+
+  }else{
+
+   textarea.value=text;
+
+  }
+
+
+  /*
+   * 6. 완료 표시
+   */
+
+  document
+   .getElementById(
+    "transcribeStatus"
+   )
+   .innerHTML = `
+
+<div class="success-box">
+
+ ✅ 음성파일 문자변환 완료
+
+ <br><br>
+
+ 변환된 내용이
+ <b>상담내용</b>에 입력되었습니다.
+
+ <br><br>
+
+ 내용을 확인한 후
+ <b>상담 저장</b>을 눌러주세요.
+
+</div>
+
+`;
+
+
+  textarea.focus();
+
+
+ }catch(error){
+
+  console.error(
+   "Whisper transcription error:",
+   error
+  );
+
+
+  let message =
+   error?.message ||
+   "알 수 없는 오류";
+
+
+  /*
+   * 모바일에서 디코딩이 안 되는 파일에
+   * 대한 안내
+   */
+
+  if(
+   message.includes(
+    "decodeAudioData"
+   )
+  ){
+
+   message =
+    "이 음성파일 형식을 현재 브라우저에서 읽지 못했습니다.";
+
+  }
+
+
+  document
+   .getElementById(
+    "transcribeStatus"
+   )
+   .innerHTML = `
+
+<div class="alert">
+
+ ❌ 음성 문자변환 오류
+
+ <br><br>
+
+ ${escapeHtml(message)}
+
+ <br><br>
+
+ MP3 / WAV / M4A / WEBM 등의
+ 음성파일을 사용해주세요.
+
+</div>
+
+`;
+
+ }finally{
+
+  button.disabled=false;
+
+ }
+
+};
+
+
+/* =====================================================
+   안전한 HTML 문자 처리
+===================================================== */
+
+function escapeHtml(value){
+
+ return String(
+  value ?? ""
+ )
+ .replaceAll(
+  "&",
+  "&amp;"
+ )
+ .replaceAll(
+  "<",
+  "&lt;"
+ )
+ .replaceAll(
+  ">",
+  "&gt;"
+ )
+ .replaceAll(
+  '"',
+  "&quot;"
+ )
+ .replaceAll(
+  "'",
+  "&#039;"
+ );
+
+}
+
+</script>
+
+
 </body>
 </html>
