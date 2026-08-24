@@ -2202,6 +2202,8 @@ function startApp(){
 
  addWatermark();
 
+ history.replaceState({ page: "home" }, "", "#home");
+
  refresh();
 
 }
@@ -2269,13 +2271,10 @@ function addLog(
 
 
 /* =====================================================
-   NAV
+   NAV (수정됨: 브라우저 뒤로가기 연동)
 ===================================================== */
 
-function go(
- id,
- el
-){
+function go(id, el, isBack = false){
 
  document
   .querySelectorAll(".page")
@@ -2300,12 +2299,35 @@ function go(
 
   el.classList.add("active");
 
+ } else {
+
+  const navs = document.querySelectorAll(".nav");
+  const navMap = { 'home': 0, 'cases': 1, 'consult': 2, 'ai': 3, 'follow': 4 };
+  if(navMap[id] !== undefined && navs[navMap[id]]){
+   document.querySelectorAll(".nav").forEach(x => x.classList.remove("active"));
+   navs[navMap[id]].classList.add("active");
+  }
+
+ }
+
+
+ if (!isBack && history.state?.page !== id) {
+  history.pushState({ page: id }, "", `#${id}`);
  }
 
 
  window.scrollTo(0,0);
 
 }
+
+// 기기 하단 뒤로가기 버튼 감지 이벤트
+window.addEventListener("popstate", (e) => {
+ if (e.state && e.state.page) {
+  go(e.state.page, null, true);
+ } else {
+  go("home", null, true);
+ }
+});
 
 /* 카드 이동 시 하단 네비게이션 활성화도 함께 변경하는 도우미 함수 */
 function goNav(pageId, navIndex){
