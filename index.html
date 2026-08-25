@@ -1762,7 +1762,7 @@ hr{
   </div>
 
 
-  <h2>새 사건 등록</h2>
+  <h2 id="caseModalTitle">새 사건 등록</h2>
 
 
   <label>사건번호</label>
@@ -2631,12 +2631,46 @@ function openCase(){
     .value=""
  );
 
+ const modal = document.getElementById("caseModal");
+ modal.dataset.editId = "";
+ 
+ const titleEl = document.getElementById("caseModalTitle");
+ if(titleEl) titleEl.textContent = "새 사건 등록";
 
  openModal("caseModal");
 
 }
 
+/* 사건 수정 모달 열기 */
+function openEditCase(id){
 
+ const c = db.cases.find(x => x.id === id);
+
+ if(!c) return;
+
+ document.getElementById("fNo").value = c.no;
+
+ document.getElementById("fName").value = c.name;
+
+ document.getElementById("fFamily").value = c.family;
+
+ document.getElementById("fRegion").value = c.region;
+
+ document.getElementById("fStatus").value = c.status;
+
+ const modal = document.getElementById("caseModal");
+
+ modal.dataset.editId = id;
+
+ const titleEl = document.getElementById("caseModalTitle");
+
+ if(titleEl) titleEl.textContent = "사건 정보 수정";
+
+ openModal("caseModal");
+
+}
+
+/* 사건 저장 (등록 및 수정 공통) */
 function saveCase(){
 
  const no =
@@ -2663,75 +2697,149 @@ function saveCase(){
 
  }
 
+ const editId = document.getElementById("caseModal").dataset.editId;
 
- if(
-  db.cases.some(
-   x => x.no === no
-  )
- ){
+ if(editId){
+
+  /* 수정 처리 */
+  const c = db.cases.find(x => x.id === editId);
+
+  if(!c) return;
+
+  if(db.cases.some(x => x.no === no && x.id !== editId)){
+
+   alert("이미 존재하는 사건번호입니다.");
+
+   return;
+
+  }
+
+  c.no = no;
+
+  c.name = name;
+
+  c.family = document.getElementById("fFamily").value.trim() || "배우자";
+
+  c.region = document.getElementById("fRegion").value.trim() || "미입력";
+
+  c.status = document.getElementById("fStatus").value;
+
+  addLog("사건 수정", no);
+
+  saveDB();
+
+  closeModal("caseModal");
+
+  refresh();
+
+  detail(editId);
+
+  alert("사건 정보가 수정되었습니다.");
+
+ } else {
+
+  /* 신규 등록 처리 */
+  if(
+   db.cases.some(
+    x => x.no === no
+   )
+  ){
+
+   alert(
+    "이미 등록된 사건번호입니다."
+   );
+
+   return;
+
+  }
+
+  const newId = "c" + Date.now();
+
+  db.cases.push({
+
+   id: newId,
+
+   no,
+
+   name,
+
+   family:
+    document
+     .getElementById("fFamily")
+     .value
+     .trim()
+    ||
+    "배우자",
+
+   region:
+    document
+     .getElementById("fRegion")
+     .value
+     .trim()
+    ||
+    "미입력",
+
+   status:
+    document
+     .getElementById("fStatus")
+     .value,
+
+   created:
+    new Date()
+     .toISOString()
+     .slice(0,10)
+
+  });
+
+  addLog(
+   "사건 등록",
+   no
+  );
+
+  saveDB();
+
+  closeModal("caseModal");
+
+  refresh();
 
   alert(
-   "이미 등록된 사건번호입니다."
+   "사건이 저장되었습니다."
   );
+
+ }
+
+}
+
+/* 사건 삭제 함수 (관련 데이터 연쇄 삭제) */
+function deleteCase(id){
+
+ const c = db.cases.find(x => x.id === id);
+
+ if(!c) return;
+
+ if(!confirm(`정말로 사건 [${c.no} - ${c.name}] 항목을 삭제하시겠습니까?\n해당 사건에 속한 상담기록, 사망정보, 후속조치 항목도 모두 삭제됩니다.`)){
 
   return;
 
  }
 
+ db.cases = db.cases.filter(x => x.id !== id);
 
- db.cases.push({
+ db.consultations = db.consultations.filter(x => x.caseId !== id);
 
-  id:"c"+Date.now(),
+ db.deaths = db.deaths.filter(x => x.caseId !== id);
 
-  no,
+ db.todos = db.todos.filter(x => x.caseId !== id);
 
-  name,
-
-  family:
-   document
-    .getElementById("fFamily")
-    .value
-    .trim()
-   ||
-   "배우자",
-
-  region:
-   document
-    .getElementById("fRegion")
-    .value
-    .trim()
-   ||
-   "미입력",
-
-  status:
-   document
-    .getElementById("fStatus")
-    .value,
-
-  created:
-   new Date()
-    .toISOString()
-    .slice(0,10)
-
- });
-
-
- addLog(
-  "사건 등록",
-  no
- );
-
+ addLog("사건 삭제", c.no);
 
  saveDB();
 
- closeModal("caseModal");
-
  refresh();
 
+ go("cases");
 
- alert(
-  "사건이 저장되었습니다."
- );
+ alert("사건이 삭제되었습니다.");
 
 }
 
@@ -2924,7 +3032,35 @@ function detail(id){
 
 <div class="box">
 
- <h2>👤 기본정보</h2>
+ <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+
+  <h2 style="margin:0;">👤 기본정보</h2>
+
+  <div>
+
+   <button class="secondary" style="padding:5px 10px; font-size:11px;" onclick="openEditCase('${c.id}')">
+
+    수정
+
+   </button>
+
+   ${
+
+    session && session.role === "ADMIN"
+
+    ? `<button class="red" style="padding:5px 10px; font-size:11px; margin-left:3px;" onclick="deleteCase('${c.id}')">
+
+        삭제
+
+       </button>`
+
+    : ""
+
+   }
+
+  </div>
+
+ </div>
 
 
  <div class="item">
