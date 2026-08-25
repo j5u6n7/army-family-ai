@@ -1912,7 +1912,7 @@ hr{
   </div>
 
 
-  <h2>후속조치 등록</h2>
+  <h2 id="todoModalTitle">후속조치 등록</h2>
 
 
   <label>사건</label>
@@ -4055,19 +4055,50 @@ function analyzeConsult(){
    TODO
 ===================================================== */
 
-function openTodo(){
+/* 후속조치 등록/수정 모달 열기 */
+function openTodo(id = null){
 
  fillSelects();
 
+ const modal = document.getElementById("todoModal");
 
- document
-  .getElementById("todoText")
-  .value="";
+ if(id){
+
+  /* 수정 모드 */
+  const item = db.todos.find(x => x.id === id);
+
+  if(!item) return;
 
 
- document
-  .getElementById("todoDate")
-  .value="";
+  document.getElementById("todoCase").value = item.caseId;
+
+  document.getElementById("todoText").value = item.text;
+
+  document.getElementById("todoDate").value = item.date || "";
+
+  modal.dataset.editId = id;
+
+  
+
+  const titleEl = document.getElementById("todoModalTitle");
+
+  if(titleEl) titleEl.textContent = "후속조치 수정";
+
+ } else {
+
+  /* 신규 등록 모드 */
+  document.getElementById("todoText").value = "";
+
+  document.getElementById("todoDate").value = "";
+
+  modal.dataset.editId = "";
+
+
+  const titleEl = document.getElementById("todoModalTitle");
+
+  if(titleEl) titleEl.textContent = "후속조치 등록";
+
+ }
 
 
  openModal("todoModal");
@@ -4075,25 +4106,44 @@ function openTodo(){
 }
 
 
+/* 후속조치 저장 (신규 등록 및 수정 공통) */
 function saveTodo(){
 
  const caseId =
+
   document
+
    .getElementById("todoCase")
+
    .value;
 
 
  const text =
+
   document
+
    .getElementById("todoText")
+
    .value
+
    .trim();
+
+
+ const date =
+
+  document
+
+   .getElementById("todoDate")
+
+   .value;
 
 
  if(!caseId || !text){
 
   alert(
+
    "사건과 할 일을 입력해주세요."
+
   );
 
   return;
@@ -4101,59 +4151,96 @@ function saveTodo(){
  }
 
 
- db.todos.push({
-
-  id:"t"+Date.now(),
-
-  caseId,
-
-  text,
-
-  date:
-   document
-    .getElementById("todoDate")
-    .value,
-
-  done:false
-
- });
+ const editId = document.getElementById("todoModal").dataset.editId;
 
 
- addLog(
-  "후속조치 등록",
-  text
- );
+ if(editId){
+
+  /* 기존 항목 수정 */
+
+  const x = db.todos.find(item => item.id === editId);
+
+  if(x){
+
+   x.caseId = caseId;
+
+   x.text = text;
+
+   x.date = date;
+
+   addLog("후속조치 수정", text);
+
+  }
+
+ } else {
+
+  /* 신규 항목 추가 */
+
+  db.todos.push({
+
+   id:"t"+Date.now(),
+
+   caseId,
+
+   text,
+
+   date,
+
+   done:false
+
+  });
+
+
+  addLog(
+
+   "후속조치 등록",
+
+   text
+
+  );
+
+ }
 
 
  saveDB();
 
+
  closeModal("todoModal");
+
 
  refresh();
 
 }
 
 
-function completeTodo(id){
+/* 후속조치 완료/취소 토글 */
+function toggleTodoDone(id){
 
  const x =
+
   db.todos.find(
+
    x => x.id === id
+
   );
 
 
  if(x){
 
-  x.done=true;
+  x.done = !x.done;
 
 
   addLog(
-   "후속조치 완료",
+
+   x.done ? "후속조치 완료" : "후속조치 완료 취소",
+
    x.text
+
   );
 
 
   saveDB();
+
 
   refresh();
 
@@ -4162,25 +4249,72 @@ function completeTodo(id){
 }
 
 
+/* 후속조치 수정 버튼 클릭 */
+function editTodo(id){
+
+ openTodo(id);
+
+}
+
+
+/* 후속조치 삭제 */
+function deleteTodo(id){
+
+ const x = db.todos.find(item => item.id === id);
+
+ if(!x) return;
+
+
+ if(!confirm(`'${x.text}' 항목을 삭제하시겠습니까?`)){
+
+  return;
+
+ }
+
+
+ db.todos = db.todos.filter(item => item.id !== id);
+
+
+ addLog("후속조치 삭제", x.text);
+
+
+ saveDB();
+
+
+ refresh();
+
+}
+
+
 function renderTodos(){
 
  const el =
+
   document.getElementById(
+
    "todoList"
+
   );
 
 
  el.innerHTML =
+
   db.todos.length
+
 
   ?
 
+
   db.todos
+
    .map(x => {
 
     const c =
+
      db.cases.find(
+
       c => c.id === x.caseId
+
      );
 
 
@@ -4191,6 +4325,7 @@ function renderTodos(){
  <b>
 
   ${x.done ? "✅" : "⬜"}
+
   ${esc(x.text)}
 
  </b>
@@ -4208,37 +4343,85 @@ function renderTodos(){
  <br><br>
 
 
+ <div class="row" style="gap:5px;">
+
  ${
+
   x.done
+
 
   ?
 
-  "<span class='badge green'>완료</span>"
+
+  `<button
+
+    class="gray"
+
+    style="padding:6px 10px; font-size:11px;"
+
+    onclick="toggleTodoDone('${x.id}')">
+
+    취소
+
+   </button>`
+
 
   :
 
-  `
 
-<button
- class="green"
- onclick="completeTodo('${x.id}')">
+  `<button
 
- 완료처리
+    class="green"
 
-</button>
+    style="padding:6px 10px; font-size:11px;"
 
-`
+    onclick="toggleTodoDone('${x.id}')">
+
+    완료처리
+
+   </button>`
 
  }
+
+
+ <button
+
+  class="secondary"
+
+  style="padding:6px 10px; font-size:11px;"
+
+  onclick="editTodo('${x.id}')">
+
+  수정
+
+ </button>
+
+
+ <button
+
+  class="red"
+
+  style="padding:6px 10px; font-size:11px;"
+
+  onclick="deleteTodo('${x.id}')">
+
+  삭제
+
+ </button>
+
+ </div>
 
 </div>
 
 `;
 
    })
+
    .join("")
 
+
   :
+
 
   "<div class='empty'>후속조치가 없습니다.</div>";
 
