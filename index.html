@@ -102,7 +102,6 @@ button.orange{
   #e8edf2
  )
 }
-
 .login-box{
  width:100%;
  max-width:430px;
@@ -123,7 +122,6 @@ button.orange{
  gap:12px;
  margin-bottom:25px
 }
-
 .army-mark{
  width:62px;
  height:62px;
@@ -185,7 +183,6 @@ button.orange{
  font-size:12px;
  color:#7a8797
 }
-
 
 /* =====================================================
    입력
@@ -467,7 +464,7 @@ h2{
 
 
 /* =====================================================
-   하단 메뉴
+   하단 메뉴 (6개 1줄 배치 수정)
 ===================================================== */
 
 .bottom{
@@ -481,7 +478,7 @@ h2{
  background:#fff;
  border-top:1px solid #e1e6ec;
  display:grid;
- grid-template-columns:repeat(5,1fr);
+ grid-template-columns:repeat(6,1fr);
  z-index:30
 }
 
@@ -489,7 +486,9 @@ h2{
  text-align:center;
  padding-top:8px;
  color:#7b8795;
- font-size:10px
+ font-size:10px;
+ white-space:nowrap;
+ word-break:keep-all;
 }
 
 .nav b{
@@ -625,7 +624,6 @@ h2{
  padding:15px;
  margin-top:8px
 }
-
 .transcribe-title{
  font-weight:900;
  color:#173e64;
@@ -668,7 +666,6 @@ hr{
  margin:18px 0
 }
 
-
 /* =====================================================
    반응형
 ===================================================== */
@@ -693,6 +690,15 @@ hr{
 
  .num{
   font-size:23px
+ }
+
+ .nav{
+  font-size:9px;
+  padding-top:6px;
+ }
+
+ .nav b{
+  font-size:18px;
  }
 
 }
@@ -721,7 +727,6 @@ hr{
 
 
 <body>
-
 
 <!-- =====================================================
      보안경고
@@ -869,7 +874,6 @@ hr{
    placeholder="비밀번호"
    onkeydown="if(event.key==='Enter')login()">
 
-
   <button
    class="full"
    onclick="login()">
@@ -889,7 +893,6 @@ hr{
     cursor:pointer
    "
    onclick="openModal('applyModal')">
-
    사용자 이용신청
 
   </div>
@@ -952,7 +955,6 @@ hr{
    로그아웃
 
   </button>
-
   <button
    class="logout-btn"
    style="background-color: #5a6268;"
@@ -973,7 +975,6 @@ hr{
 <!-- =====================================================
      HOME
 ===================================================== -->
-
 <section
  id="home"
  class="page active">
@@ -993,7 +994,6 @@ hr{
 
 
  <div class="grid">
-
 
   <!-- 진행 사건 카드 클릭 시 사건페이지로 이동 -->
   <div class="card clickable-card" onclick="goNav('cases', 1)">
@@ -1036,7 +1036,6 @@ hr{
 
   </div>
 
-
   <!-- 완료 카드 클릭 시 관리페이지로 이동 -->
   <div class="card clickable-card" onclick="goNav('follow', 4)">
 
@@ -1078,7 +1077,6 @@ hr{
     onclick="openCase()">
 
     + 사건등록
-
    </button>
 
   </div>
@@ -1225,7 +1223,6 @@ hr{
   <label>상담방법</label>
 
   <select id="consultMethod">
-
    <option>전화</option>
    <option>문자</option>
    <option>방문</option>
@@ -1267,7 +1264,6 @@ hr{
 
     기존에 녹음해 둔 상담 음성파일을 선택하면
     음성을 문자로 변환합니다.
-
     <br><br>
 
     변환된 내용은 위의
@@ -1456,7 +1452,6 @@ hr{
  class="page">
 
  <h1>✅ 후속조치</h1>
-
  <div class="sub">
   사건별 후속 업무를 관리합니다.
  </div>
@@ -1477,10 +1472,45 @@ hr{
  <div class="box">
 
   <div id="todoList"></div>
-
  </div>
 
 </section>
+
+<!-- =====================================================
+     CHAT (소통방)
+===================================================== -->
+<section id="chat" class="page">
+ <h1>💬 업무 소통방</h1>
+ <p class="sub">동일한 방 코드를 입력하면 담당자 간 실시간으로 메시지를 주고받을 수 있습니다.</p>
+
+ <div class="box" style="padding:12px">
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+   <label style="margin:0">방 코드</label>
+   <input id="chatRoomCode" placeholder="예: 1중대-유가족팀" style="margin:0;flex:1;min-width:140px" value="육군-유가족-1">
+   <button onclick="joinP2PChat()" id="joinBtn" class="green" style="padding:10px 14px">연결</button>
+   <span id="p2pStatus" style="font-size:11px;color:#667085">연결 안됨</span>
+  </div>
+  <div style="font-size:10px;color:#8a96a6;margin-top:6px">부대/팀별로 동일한 방 코드를 지정하여 참여하세요.</div>
+ </div>
+ <div class="box" style="padding:0;overflow:hidden;display:flex;flex-direction:column;height:58vh;min-height:380px">
+  <div id="chatList" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;background:#f8fafc"></div>
+  <div style="padding:10px;border-top:1px solid #e2e7ed;background:#fff;display:flex;gap:8px;align-items:flex-end">
+   <textarea id="chatInput" placeholder="메시지를 입력하세요 (Shift+Enter 줄바꿈)" style="margin:0;min-height:44px;max-height:120px;resize:none;flex:1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}"></textarea>
+   <button onclick="sendChat()" style="height:44px;padding:0 18px">전송</button>
+  </div>
+ </div>
+
+ <div class="row" style="margin-top:10px">
+  <button class="secondary" onclick="clearChat()">대화기록 삭제</button>
+  <button class="secondary" onclick="exportChat()">내보내기</button>
+ </div>
+
+ <div id="chatUsers" class="box" style="margin-top:12px">
+  <h2 style="font-size:13px">🟢 연결된 담당자 (<span id="peerCount">0</span>명)</h2>
+  <div id="chatUserList" style="font-size:12px;color:#586578">방 코드를 입력하고 연결을 눌러주세요.</div>
+ </div>
+</section>
+
 
 
 <!-- =====================================================
@@ -1565,7 +1595,6 @@ hr{
  class="page">
 
  <h1>👨‍💼 관리자</h1>
-
  <div class="sub">
   사용자 승인 및 감사로그
  </div>
@@ -1607,7 +1636,6 @@ hr{
     </thead>
 
     <tbody id="logList"></tbody>
-
    </table>
 
   </div>
@@ -1621,7 +1649,7 @@ hr{
 
 
 <!-- =====================================================
-     NAV
+     NAV (하단 메뉴)
 ===================================================== -->
 
 <nav class="bottom">
@@ -1670,9 +1698,18 @@ hr{
  <div
   class="nav"
   onclick="go('follow',this)">
-
   <b>✅</b>
   관리
+
+ </div>
+
+ <div
+  class="nav"
+  onclick="go('chat',this)">
+
+  <b>💬</b>
+  소통방
+  <span id="chatBadge" class="hidden" style="background:#d64545;color:#fff;font-size:8px;padding:2px 5px;border-radius:10px;margin-left:3px">N</span>
 
  </div>
 
@@ -1680,7 +1717,6 @@ hr{
 </nav>
 
 </div>
-
 
 <!-- =====================================================
      USER APPLY
@@ -1702,7 +1738,6 @@ hr{
 
 
   <h2>사용자 이용신청</h2>
-
 
   <label>아이디</label>
   <input id="applyId">
@@ -1892,7 +1927,6 @@ hr{
 
 </div>
 
-
 <!-- =====================================================
      TODO MODAL
 ===================================================== -->
@@ -1975,7 +2009,6 @@ let db =
   "null"
  );
 
-
 if(!db){
 
  db={
@@ -2037,7 +2070,6 @@ if(!db){
   ]
 
  };
-
 
  saveDB();
 
@@ -2248,7 +2280,6 @@ function login(){
 
 
  session={
-
   id:u.id,
 
   name:u.name,
@@ -2269,7 +2300,6 @@ function login(){
  startApp();
 
 }
-
 
 function logout(){
 
@@ -2311,7 +2341,6 @@ function startApp(){
   .getElementById("loginScreen")
   .classList.add("hidden");
 
-
  document
   .getElementById("app")
   .classList.remove("hidden");
@@ -2332,7 +2361,6 @@ function startApp(){
  checkFirstLoginModal();
 
  history.replaceState({ page: "home" }, "", "#home");
-
  refresh();
 
 }
@@ -2395,7 +2423,6 @@ function addLog(
 
 
  saveDB();
-
 }
 
 
@@ -2416,7 +2443,6 @@ function go(id, el, isBack = false){
   .getElementById(id)
   ?.classList.add("active");
 
-
  if(el){
 
   document
@@ -2431,7 +2457,7 @@ function go(id, el, isBack = false){
  } else {
 
   const navs = document.querySelectorAll(".nav");
-  const navMap = { 'home': 0, 'cases': 1, 'consult': 2, 'ai': 3, 'follow': 4 };
+  const navMap = { 'home': 0, 'cases': 1, 'consult': 2, 'ai': 3, 'follow': 4, 'chat': 5 };
   if(navMap[id] !== undefined && navs[navMap[id]]){
    document.querySelectorAll(".nav").forEach(x => x.classList.remove("active"));
    navs[navMap[id]].classList.add("active");
@@ -2563,7 +2589,6 @@ function applyUser(){
    x => x.loginId === id
   )
  ){
-
   alert(
    "이미 사용 중인 아이디입니다."
   );
@@ -2584,7 +2609,6 @@ function applyUser(){
   organization:org,
 
   rank,
-
   name,
 
   phone,
@@ -2647,7 +2671,6 @@ function openEditCase(id){
  const c = db.cases.find(x => x.id === id);
 
  if(!c) return;
-
  document.getElementById("fNo").value = c.no;
 
  document.getElementById("fName").value = c.name;
@@ -2731,7 +2754,6 @@ function saveCase(){
   closeModal("caseModal");
 
   refresh();
-
   detail(editId);
 
   alert("사건 정보가 수정되었습니다.");
@@ -2752,7 +2774,6 @@ function saveCase(){
    return;
 
   }
-
   const newId = "c" + Date.now();
 
   db.cases.push({
@@ -2836,7 +2857,6 @@ function deleteCase(id){
  saveDB();
 
  refresh();
-
  go("cases");
 
  alert("사건이 삭제되었습니다.");
@@ -2857,7 +2877,6 @@ function renderCases(){
 
 
  if(!db.cases.length){
-
   el.innerHTML =
    "<div class='empty'>등록된 사건이 없습니다.</div>";
 
@@ -2920,7 +2939,6 @@ function renderCases(){
    onclick="prepareConsult('${c.id}')">
 
    상담
-
   </button>
 
  </div>
@@ -2962,7 +2980,6 @@ function renderHome(){
  <span class="badge">
   ${esc(c.status)}
  </span>
-
 
  <div
   class="sub"
@@ -3067,7 +3084,6 @@ function detail(id){
 
   <b>고인</b><br>
   ${esc(c.name)}
-
  </div>
 
 
@@ -3088,7 +3104,6 @@ function detail(id){
 
 
  <div class="item">
-
   <b>현재상태</b><br>
   ${esc(c.status)}
 
@@ -3130,7 +3145,6 @@ function detail(id){
  ${esc(d.action||"없음")}
 
  <br><br>
-
  <b>조치상태</b><br>
  ${esc(d.status)}
 
@@ -3172,7 +3186,6 @@ function detail(id){
    .map(x => `
 
 <div class="item">
-
  <b>
   ${esc(x.method)}
   ·
@@ -3193,7 +3206,6 @@ function detail(id){
   `<br><br>
    <b>상담결과</b><br>
    ${esc(x.result)}`
-
   :
 
   ""
@@ -3235,7 +3247,6 @@ function detail(id){
 
  ${
   ts.length
-
   ?
 
   ts
@@ -3256,7 +3267,6 @@ function detail(id){
 
 `)
 .join("")
-
   :
 
   "<div class='empty'>후속조치 없음</div>"
@@ -3340,7 +3350,6 @@ function fillSelects(){
 `)
 .join("");
 
-
  [
   "consultCase",
   "reportCase",
@@ -3382,7 +3391,6 @@ function openDeath(){
 
 }
 
-
 function openDeathForCase(id){
 
  openDeath();
@@ -3403,7 +3411,6 @@ function editDeath(id){
 
 
  if(!d)return;
-
 
  fillSelects();
 
@@ -3466,7 +3473,6 @@ function saveDeath(){
   alert(
    "사건을 선택해주세요."
   );
-
   return;
 
  }
@@ -3530,7 +3536,6 @@ function saveDeath(){
    data
   );
 
-
   addLog(
    "사망정보 수정",
    caseId
@@ -3592,7 +3597,6 @@ function renderDeaths(){
       x => x.id === d.caseId
      );
 
-
     return `
 
 <div class="case">
@@ -3634,7 +3638,6 @@ function renderDeaths(){
   }">
 
   ${esc(d.status)}
-
  </span>
 
 
@@ -3676,7 +3679,6 @@ function renderDeaths(){
 ===================================================== */
 
 function prepareConsult(id){
-
  fillSelects();
 
 
@@ -3696,7 +3698,6 @@ function prepareConsult(id){
   )
   .toISOString()
   .slice(0,16);
-
 
  document
   .getElementById("consultDateTime")
@@ -3739,7 +3740,6 @@ function clearConsultAudio(){
  if(fileInput){
 
   fileInput.value="";
-
  }
 
 
@@ -3782,7 +3782,6 @@ function clearConsultAudio(){
 
  }
 
-
  const button =
   document
    .getElementById("transcribeBtn");
@@ -3802,7 +3801,6 @@ function clearConsultAudio(){
 ===================================================== */
 
 function saveConsult(){
-
  const caseId =
   document
    .getElementById("consultCase")
@@ -3823,7 +3821,6 @@ function saveConsult(){
   );
 
   return;
-
  }
 
 
@@ -3844,7 +3841,6 @@ function saveConsult(){
     .value,
 
   text,
-
   result:
    document
     .getElementById("consultResult")
@@ -3864,7 +3860,6 @@ function saveConsult(){
 
 
  db.consultations.push(item);
-
 
  if(item.follow){
 
@@ -3886,7 +3881,6 @@ function saveConsult(){
   });
 
  }
-
 
  addLog(
   "상담 등록",
@@ -3928,7 +3922,6 @@ function saveConsult(){
 /* =====================================================
    CONSULT RENDER
 ===================================================== */
-
 function renderConsults(){
 
  const el =
@@ -3970,7 +3963,6 @@ function renderConsults(){
   ${esc(x.dateTime)}
   ·
   ${c ? esc(c.no) : ""}
-
  </b>
 
 
@@ -4033,7 +4025,6 @@ function renderConsults(){
 
 }
 
-
 /* =====================================================
    AI
 ===================================================== */
@@ -4054,7 +4045,6 @@ function openAI(){
   );
 
   return;
-
  }
 
 
@@ -4096,7 +4086,6 @@ ${text}
   url =
    "https://gemini.google.com/app?q="+
    encodeURIComponent(prompt);
-
  }
 
 
@@ -4138,7 +4127,6 @@ function openAIForCase(id){
  document
   .getElementById("aiText")
   .value =
-
   cs.length
 
   ?
@@ -4180,7 +4168,6 @@ function analyzeConsult(){
  document
   .getElementById("aiText")
   .value=text;
-
 
  go("ai");
 
@@ -4264,7 +4251,6 @@ function saveTodo(){
 
    .trim();
 
-
  const date =
 
   document
@@ -4285,7 +4271,6 @@ function saveTodo(){
   return;
 
  }
-
 
  const editId = document.getElementById("todoModal").dataset.editId;
 
@@ -4348,7 +4333,6 @@ function saveTodo(){
 
 }
 
-
 /* 후속조치 완료/취소 토글 */
 function toggleTodoDone(id){
 
@@ -4369,7 +4353,6 @@ function toggleTodoDone(id){
   addLog(
 
    x.done ? "후속조치 완료" : "후속조치 완료 취소",
-
    x.text
 
   );
@@ -4432,7 +4415,6 @@ function renderTodos(){
 
   );
 
-
  el.innerHTML =
 
   db.todos.length
@@ -4452,7 +4434,6 @@ function renderTodos(){
       c => c.id === x.caseId
 
      );
-
 
     return `
 
@@ -4474,7 +4455,6 @@ function renderTodos(){
  ·
 
  ${esc(x.date||"기한 없음")}
-
 
  <br><br>
 
@@ -4516,7 +4496,6 @@ function renderTodos(){
     완료처리
 
    </button>`
-
  }
 
 
@@ -4557,7 +4536,6 @@ function renderTodos(){
 
 
   :
-
 
   "<div class='empty'>후속조치가 없습니다.</div>";
 
@@ -4601,7 +4579,6 @@ ${x.follow||""}`
    )
    .join("\n\n");
 
-
  go("report");
 
 }
@@ -4621,7 +4598,6 @@ function openAIReport(){
   alert(
    "상담내용을 입력해주세요."
   );
-
   return;
 
  }
@@ -4663,7 +4639,6 @@ function searchAll(){
    .value
    .trim()
    .toLowerCase();
-
 
  if(!q){
 
@@ -4747,7 +4722,6 @@ function searchAll(){
   ${esc(c.no)}
   ·
   ${esc(c.name)}
-
  </b>
 
 
@@ -4768,7 +4742,6 @@ function searchAll(){
  </button>
 
 </div>
-
 `)
 .join("")
 
@@ -4915,7 +4888,6 @@ function searchCases(){
 .join("")
 
  ||
-
  "<div class='empty'>검색 결과가 없습니다.</div>"
 
  }
@@ -4936,7 +4908,6 @@ function searchCases(){
 /* =====================================================
    ADMIN
 ===================================================== */
-
 function renderAdmin(){
 
  const el =
@@ -4956,7 +4927,6 @@ function renderAdmin(){
   return;
 
  }
-
 
  el.innerHTML =
   db.users
@@ -4998,7 +4968,6 @@ function renderAdmin(){
   ${esc(u.status)}
 
  </span>
-
 
  <br><br>
 
@@ -5104,7 +5073,6 @@ function blockUser(id){
    `${u.name} 사용자를 차단하시겠습니까?`
   )
  ){
-
   return;
 
  }
@@ -5124,7 +5092,6 @@ function blockUser(id){
  refresh();
 
 }
-
 
 /* =====================================================
    LOG / NOTICE
@@ -5251,7 +5218,6 @@ function refresh(){
  renderNotifications();
 
  fillSelects();
-
  updateDemoAccountInfo();
 
 }
@@ -5293,7 +5259,6 @@ updateDemoAccountInfo();
 
 
 if(session){
-
  startApp();
 
 }else{
@@ -5335,7 +5300,6 @@ let selectedAudioFile = null;
 
 let whisperLoading = false;
 
-
 /* =====================================================
    음성파일 선택
 ===================================================== */
@@ -5356,7 +5320,6 @@ function(event){
     "transcribeBtn"
    )
    .disabled=true;
-
   document
    .getElementById(
     "audioFileInfo"
@@ -5441,7 +5404,6 @@ function(event){
   )
   .disabled=false;
 
-
  document
   .getElementById(
    "transcribeStatus"
@@ -5461,7 +5423,6 @@ function(event){
  버튼을 눌러주세요.
 
 </div>
-
 `;
 
 };
@@ -5525,7 +5486,6 @@ async function loadWhisper(){
 
 `;
 
-
   /*
    * 우선 WebGPU 사용을 시도하고
    * 문제가 있으면 WASM으로 다시 시도합니다.
@@ -5545,7 +5505,6 @@ async function loadWhisper(){
        device:"webgpu"
       }
      );
-
 
     return whisperTranscriber;
 
@@ -5608,7 +5567,6 @@ async function decodeAudioFile(file){
   );
 
  }
-
 
  const context =
   new AudioContextClass();
@@ -5693,7 +5651,6 @@ async function decodeAudioFile(file){
       sourceLength-1
      );
 
-
     const fraction =
      position-index;
 
@@ -5714,7 +5671,6 @@ async function decodeAudioFile(file){
 
   }
 
-
   return mono;
 
 
@@ -5734,7 +5690,6 @@ async function decodeAudioFile(file){
 /* =====================================================
    녹음파일 → 문자
 ===================================================== */
-
 window.transcribeSelectedAudio =
 async function(){
 
@@ -5838,7 +5793,6 @@ async function(){
      stride_length_s:5
     }
    );
-
 
   const text =
    String(
@@ -5965,7 +5919,6 @@ async function(){
 </div>
 
 `;
-
  }finally{
 
   button.disabled=false;
@@ -6007,8 +5960,230 @@ function escapeHtml(value){
 
 }
 
+
+
+/* =====================================================
+   💬 P2P 업무 소통방 - 서버 구축 없음 (PeerJS 무료 중계)
+===================================================== */
+let chatMessages = [];
+let peer = null;
+let conns = {}; // peerId -> connection
+let myPeerId = null;
+let currentRoom = null;
+
+function loadChat(){
+ try{
+  const raw = localStorage.getItem("armyChat");
+  chatMessages = raw ? JSON.parse(raw) : [];
+ }catch(e){ chatMessages=[]; }
+}
+function saveChat(){
+ localStorage.setItem("armyChat", JSON.stringify(chatMessages.slice(-500)));
+}
+function renderChat(){
+ const list = document.getElementById("chatList");
+ if(!list) return;
+ const session = JSON.parse(localStorage.getItem("armySession")||"null");
+ const myId = session?.id || session?.username || "me";
+ if(!chatMessages.length){
+  list.innerHTML = `<div style="text-align:center;color:#8a96a6;font-size:12px;padding:40px 0">아직 대화가 없습니다.<br>방 코드를 맞춰 연결한 뒤 첫 메시지를 보내보세요.</div>`;
+ } else {
+  list.innerHTML = "";
+  chatMessages.forEach(m=>{
+   const isMe = m.userId === myId;
+   const time = new Date(m.ts).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+   const div = document.createElement("div");
+   div.style.cssText = `max-width:78%;align-self:${isMe?'flex-end':'flex-start'};display:flex;flex-direction:column;gap:3px`;
+   div.innerHTML = `
+    <div style="font-size:10px;color:#8a96a6;${isMe?'text-align:right':''}">${escapeHtml(m.userName)} · ${time}</div>
+    <div style="background:${isMe?'#1d5fae':'#fff'};color:${isMe?'#fff':'#172033'};padding:10px 13px;border-radius:${isMe?'14px 14px 2px 14px':'14px 14px 14px 2px'};font-size:13px;line-height:1.5;word-break:break-word;box-shadow:0 1px 4px #0001;border:${isMe?'0':'1px solid #e2e7ed'}">${escapeHtml(m.text).replace(/\n/g,'<br>')}</div>
+   `;
+   list.appendChild(div);
+  });
+  list.scrollTop = list.scrollHeight;
+ }
+ document.getElementById("peerCount").textContent = Object.keys(conns).length + 1;
+}
+
+function addChatMessage(msg, save=true){
+ chatMessages.push(msg);
+ if(save) saveChat();
+ renderChat();
+}
+
+function sendChat(){
+ const input = document.getElementById("chatInput");
+ if(!input) return;
+ const text = input.value.trim();
+ if(!text) return;
+ const session = JSON.parse(localStorage.getItem("armySession")||"null");
+ if(!session){ alert("로그인이 필요합니다."); return; }
+ if(!currentRoom){ alert("먼저 방 코드를 입력하고 연결을 눌러주세요."); return; }
+ const msg = {
+  id: Date.now() + Math.random().toString(36).slice(2),
+  userId: session.id || session.username,
+  userName: session.name || session.username,
+  text: text,
+  ts: Date.now(),
+  room: currentRoom
+ };
+ addChatMessage(msg, true);
+ // P2P 브로드캐스트
+ Object.values(conns).forEach(c=>{
+  try{ c.send({type:'chat', data: msg}); }catch(e){}
+ });
+ input.value = "";
+ addLog(`채팅 전송: ${text.slice(0,30)}`);
+}
+
+function handleIncomingChat(msg){
+ addChatMessage(msg, true);
+}
+
+function updatePeerList(){
+ const el = document.getElementById("chatUserList");
+ if(!el) return;
+ const ids = Object.keys(conns);
+ if(!peer){
+  el.innerHTML = "연결 안됨";
+  return;
+ }
+ let html = `<div style="display:flex;align-items:center;gap:6px;margin:6px 0"><span style="width:8px;height:8px;background:#12b76a;border-radius:50%;display:inline-block"></span><b>나</b> (${escapeHtml(myPeerId||'')})</div>`;
+ ids.forEach(id=>{
+  const name = conns[id].metadata?.name || id.slice(0,8);
+  html += `<div style="display:flex;align-items:center;gap:6px;margin:6px 0"><span style="width:8px;height:8px;background:#4285f4;border-radius:50%;display:inline-block"></span><b>${escapeHtml(name)}</b><small style="color:#8a96a6">${escapeHtml(id.slice(0,12))}</small></div>`;
+ });
+ el.innerHTML = html;
+ document.getElementById("peerCount").textContent = ids.length + 1;
+}
+
+function joinP2PChat(){
+ const roomInput = document.getElementById("chatRoomCode");
+ const room = (roomInput.value||"").trim();
+ if(!room){ alert("방 코드를 입력하세요."); return; }
+ const session = JSON.parse(localStorage.getItem("armySession")||"null");
+ if(!session){ alert("로그인이 필요합니다."); return; }
+ currentRoom = room;
+ document.getElementById("p2pStatus").textContent = "연결중...";
+ document.getElementById("joinBtn").disabled = true;
+
+ const myId = `army-${room}-${session.id||session.username}-${Math.random().toString(36).slice(2,6)}`.replace(/[^a-zA-Z0-9-]/g,'-').slice(0,40);
+ myPeerId = myId;
+
+ if(peer){ try{ peer.destroy(); }catch(e){} }
+
+ // PeerJS - 무료 클라우드 서버 사용
+ peer = new Peer(myId, { debug: 0 });
+
+ peer.on('open', (id)=>{
+  document.getElementById("p2pStatus").textContent = `연결됨 (${room})`;
+  document.getElementById("p2pStatus").style.color = "#09865f";
+  document.getElementById("joinBtn").textContent = "재연결";
+  document.getElementById("joinBtn").disabled = false;
+  updatePeerList();
+  
+  const hostId = `army-${room}-host`.replace(/[^a-zA-Z0-9-]/g,'-').slice(0,40);
+  if(id !== hostId){
+   const conn = peer.connect(hostId, {metadata:{name: session.name||session.username}});
+   setupConn(conn);
+  }
+ });
+
+ peer.on('connection', (conn)=>{
+  setupConn(conn);
+ });
+
+ peer.on('error', (err)=>{
+  console.log(err);
+  if(err.type === 'peer-unavailable'){
+   document.getElementById("p2pStatus").textContent = `방 생성됨 - 대기중 (${room})`;
+   document.getElementById("p2pStatus").style.color = "#09865f";
+   document.getElementById("joinBtn").disabled = false;
+  } else {
+   document.getElementById("p2pStatus").textContent = "오류: " + err.type;
+   document.getElementById("p2pStatus").style.color = "#d64545";
+   document.getElementById("joinBtn").disabled = false;
+  }
+  updatePeerList();
+ });
+
+ try{
+  const hostId = `army-${room}-host`.replace(/[^a-zA-Z0-9-]/g,'-').slice(0,40);
+  if(myId !== hostId){
+  }
+ }catch(e){}
+}
+
+function setupConn(conn){
+ conn.on('open', ()=>{
+  conns[conn.peer] = conn;
+  updatePeerList();
+  try{
+   const recent = chatMessages.slice(-20);
+   if(recent.length) conn.send({type:'history', data: recent});
+  }catch(e){}
+ });
+ conn.on('data', (payload)=>{
+  if(!payload) return;
+  if(payload.type==='chat'){
+   handleIncomingChat(payload.data);
+   Object.values(conns).forEach(c=>{
+    if(c.peer !== conn.peer){
+     try{ c.send(payload); }catch(e){}
+    }
+   });
+  } else if(payload.type==='history'){
+   const incoming = payload.data||[];
+   let added = 0;
+   incoming.forEach(m=>{
+    if(!chatMessages.find(x=>x.id===m.id)){
+     chatMessages.push(m);
+     added++;
+    }
+   });
+   if(added){
+    chatMessages.sort((a,b)=>a.ts-b.ts);
+    saveChat();
+    renderChat();
+   }
+  }
+ });
+ conn.on('close', ()=>{
+  delete conns[conn.peer];
+  updatePeerList();
+ });
+ conn.on('error', ()=>{
+  delete conns[conn.peer];
+  updatePeerList();
+ });
+}
+
+function clearChat(){ if(!confirm("모든 대화기록을 삭제하시겠습니까?")) return; chatMessages=[]; saveChat(); renderChat(); }
+function exportChat(){
+ const txt = chatMessages.map(m=> `[${new Date(m.ts).toLocaleString()}] ${m.userName}: ${m.text}`).join("\n");
+ const blob = new Blob([txt], {type:"text/plain"}); const url = URL.createObjectURL(blob);
+ const a=document.createElement("a"); a.href=url; a.download=`army-chat-${new Date().toISOString().slice(0,10)}.txt`; a.click(); URL.revokeObjectURL(url);
+}
+
+(function initChat(){
+ loadChat();
+ const origGo = window.go;
+ window.go = function(page, el){
+  if(origGo) origGo(page, el);
+  else {
+   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+   document.getElementById(page)?.classList.add("active");
+   document.querySelectorAll(".bottom .nav").forEach(n=>n.classList.remove("active"));
+   if(el) el.classList.add("active");
+  }
+  if(page==="chat"){
+   setTimeout(renderChat,50);
+  }
+ };
+})();
 </script>
 
 
+
 </body>
-</html>
+      </html>
