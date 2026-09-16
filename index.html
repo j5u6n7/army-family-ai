@@ -1448,7 +1448,7 @@ hr{
   <h2>🔗 봇 연결</h2>
 
   <label>BOT TOKEN (@BotFather)</label>
-  <input id="tgToken" placeholder="1234567890:AAH...">
+  <input id="tgToken" placeholder="1234567890:AAH..." style="font-size:11px;letter-spacing:-0.3px" spellcheck="false">
 
   <label>CHAT ID (선택, 비우면 전체 수신)</label>
   <input id="tgChatId" placeholder="예: 123456789">
@@ -6027,7 +6027,7 @@ function getTelegramConfig(){
   };
 }
 
-function saveTelegramSettings(){
+function saveTelegramSettings_original(){
   const token = document.getElementById('tgToken').value.trim();
   const chatId = document.getElementById('tgChatId').value.trim();
   if(!token){ alert('토큰을 입력하세요'); return; }
@@ -6038,6 +6038,35 @@ function saveTelegramSettings(){
   alert('저장되었습니다. 자동기록 시작을 눌러주세요.');
 }
 
+
+function saveTelegramSettingsFixed(){
+  let tokenEl = document.getElementById('tgToken');
+  let token = tokenEl.value.trim();
+  // If token looks truncated (<45 chars), try to get from clipboard or prompt
+  if(token.length < 45){
+    const full = prompt(`토큰이 짧게 잘렸습니다!\n현재 길이: ${token.length}\n\nBotFather가 준 전체 토큰(45자 이상)을 붙여넣어주세요:\n예: 8977620358:AAGf...-92A`, token);
+    if(full && full.trim().length>20){ token = full.trim(); tokenEl.value = token; }
+  }
+  if(!token){ alert('토큰을 입력하세요'); return; }
+  if(token.length < 40){ alert('토큰이 너무 짧습니다. BotFather 메시지에서 전체를 복사하세요.\n현재 길이: '+token.length); return; }
+  const chatId = document.getElementById('tgChatId').value.trim();
+  try{
+    localStorage.setItem('TG_TOKEN_ARMY', token);
+    localStorage.setItem('TG_CHAT_ARMY', chatId);
+    localStorage.setItem('TG_TOKEN_BACKUP', token); // backup key
+    document.getElementById('tgStatus').textContent = `✅ 저장 성공! 길이: ${token.length} / 토큰: ${token.slice(0,10)}...${token.slice(-8)}`;
+    addTgLog(`✅ 저장 성공 길이 ${token.length}: ${token.slice(0,15)}...`);
+    alert(`✅ 저장 성공!\n길이: ${token.length}\n토큰: ${token.slice(0,20)}...`);
+    updateTgStatus();
+  }catch(e){
+    alert('저장 실패: '+e.message+'\n시크릿 모드이면 저장이 안 됩니다. 일반 브라우저로 열어주세요.');
+    // Fallback to session
+    window._tg_token_fallback = token;
+    addTgLog('⚠️ localStorage 실패, 메모리 저장으로 전환: '+e.message);
+  }
+}
+
+function saveTelegramSettings(){ return saveTelegramSettingsFixed(); }
 async function testTelegram(){
   const cfg = getTelegramConfig();
   const token = document.getElementById('tgToken').value.trim() || cfg.token;
@@ -6049,6 +6078,7 @@ async function testTelegram(){
     else{ addTgLog(`❌ 오류: ${j.description}`); alert('오류: '+j.description); }
   }catch(e){ addTgLog('❌ 연결 실패: '+e.message+' (CORS일 수 있음)'); alert('연결 실패 - 브라우저 CORS 문제일 수 있습니다. 그래도 폴링은 시도됩니다.'); }
 }
+
 function parseArmyReport(raw){
   const titleMatch = raw.match(/\[(\d+-\d+)\]\s*\[(.+?)\]/);
   const timeCode = titleMatch ? titleMatch[1] : '';
@@ -6082,7 +6112,6 @@ function parseArmyReport(raw){
     createdAt: new Date().toLocaleString('ko-KR')
   };
 }
-
 function saveTelegramToApp(parsed){
   // DB 구조 파악 - 기존 DB는 localStorage에 army_db 같은 이름
   // 실제 앱은 전역 변수에 저장됨. 우리는 앱의 기존 함수 활용
@@ -6124,7 +6153,6 @@ ${parsed.guideRaw}
 
 3. 유가족 반응
 ${parsed.reactionRaw}
-
 ※ ${parsed.follow}
 
 ---
@@ -6229,7 +6257,6 @@ function stopTelegramPolling(){
   addTgLog('⏸ 중지됨');
   updateTgStatus();
 }
-
 function addTgLog(msg){
   const time = new Date().toLocaleTimeString();
   tgLogs.unshift({time, msg});
@@ -6237,6 +6264,7 @@ function addTgLog(msg){
   localStorage.setItem('TG_LOGS_ARMY', JSON.stringify(tgLogs));
   renderTgLog();
 }
+
 function renderTgLog(){
   const box = document.getElementById('tgLog');
   if(!box) return;
@@ -6269,7 +6297,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
 });
 
 </script>
-
 
 </body>
       </html>
