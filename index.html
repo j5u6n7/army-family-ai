@@ -431,6 +431,20 @@ hr{ border:0; border-top:1px solid #e5e9ee; margin:18px 0 }
   </select>
   <button class="secondary" style="padding:6px 10px;font-size:10px" onclick="testNotify()">테스트</button>
  </div>
+
+ <!-- 텔레그램 연동 정보 입력 박스 -->
+ <div class="box" style="padding:12px; background:#f0f7ff; border:1px solid #cce3ff;">
+  <h2 style="font-size:13px; margin-bottom:8px; color:#173e64;">📱 텔레그램 스마트폰 알림 설정</h2>
+  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+   <input id="tgBotToken" placeholder="텔레그램 BOT Token 입력" style="margin:0; flex:2; min-width:180px; font-size:11px;">
+   <input id="tgChatId" placeholder="텔레그램 Chat ID 입력" style="margin:0; flex:1; min-width:120px; font-size:11px;">
+   <button onclick="saveTelegramConfig()" style="padding:8px 12px; font-size:11px;">설정 저장</button>
+  </div>
+  <div style="font-size:10px; color:#586578; margin-top:6px;">
+   * 텔레그램 @BotFather로 받은 토큰과 Chat ID를 입력하면 <b>브라우저가 닫혀 있어도 스마트폰 텔레그램 푸시 알림</b>이 전송됩니다.
+  </div>
+ </div>
+
  <div class="box" style="padding:12px">
   <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
    <label style="margin:0">방 코드</label>
@@ -508,7 +522,6 @@ hr{ border:0; border-top:1px solid #e5e9ee; margin:18px 0 }
  </div>
 </section>
 </main>
-
 <!-- NAV -->
 <nav class="bottom">
  <div class="nav active" onclick="go('home',this)"><b>🏠</b>홈</div>
@@ -655,7 +668,6 @@ function resetDemo() {
   localStorage.removeItem(DB_KEY);
   location.reload();
 }
-
 function login(){
  const id = document.getElementById("loginId").value.trim();
  const pw = document.getElementById("loginPw").value;
@@ -669,6 +681,7 @@ function login(){
  addLog("로그인");
  startApp();
 }
+
 function logout(){
  addLog("로그아웃");
  localStorage.removeItem("armySession");
@@ -696,7 +709,6 @@ function addWatermark(){
  wm.textContent = `유가족지원 AI ${session.name}`;
  document.body.appendChild(wm);
 }
-
 function addLog(action, target=""){
  db.logs.push({ time: new Date().toLocaleString("ko-KR"), user: session?.name || "미로그인", action, target });
  saveDB();
@@ -731,6 +743,7 @@ function goNav(pageId, navIndex){
 
 function openModal(id){ document.getElementById(id).classList.add("show"); }
 function closeModal(id){ document.getElementById(id).classList.remove("show"); }
+
 function applyUser(){
  const id = document.getElementById("applyId").value.trim();
  const pw = document.getElementById("applyPw").value;
@@ -982,6 +995,7 @@ function prepareConsult(id){
  document.getElementById("consultFollow").value="";
  go("consult");
 }
+
 function clearConsultAudio(){
  window.currentAudioFile=null;
  const fileInput = document.getElementById("audioFile"); if(fileInput) fileInput.value="";
@@ -1338,10 +1352,11 @@ window.transcribeSelectedAudio = async function(){
   document.getElementById("transcribeStatus").innerHTML = `<div class="alert">❌ 음성 문자변환 오류<br><br>${escapeHtml(message)}<br><br>MP3 / WAV / M4A / WEBM 등의 음성파일을 사용해주세요.</div>`;
  }finally{ button.disabled=false; }
 };
+
 function escapeHtml(value){ return String(value ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;"); }
 </script>
 
-<!-- P2P 업무 소통방 전용 JS (한글 인코딩 및 Peer 오류 완충 완전 보완) -->
+<!-- P2P 소통방 및 텔레그램 알림 JS -->
 <script>
 let chatMessages = [];
 let peer = null;
@@ -1358,6 +1373,7 @@ function loadChat(){
 function saveChat(){
  localStorage.setItem("armyChat", JSON.stringify(chatMessages.slice(-500)));
 }
+
 function renderChat(){
  const list = document.getElementById("chatList");
  if(!list) return;
@@ -1385,58 +1401,93 @@ function renderChat(){
  if(peerCountEl) peerCountEl.textContent = Object.keys(conns).length + 1;
 }
 
-
-/* ========= 알림 기능 ========= */
+/* ========= 알림 및 텔레그램 연동 기능 ========= */
 let notifyEnabled = (localStorage.getItem('armyNotifyEnabled') !== 'false');
 let notifySoundType = localStorage.getItem('armyNotifySound') || 'beep';
 let unreadCount = 0;
 let audioCtx = null;
+
+// AudioContext 비동기 활성화
+function ensureAudioContext() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+document.addEventListener('click', ensureAudioContext, { once: true });
+document.addEventListener('keydown', ensureAudioContext, { once: true });
+
+function loadTelegramConfig() {
+  const token = localStorage.getItem("armyTgToken") || "";
+  const chatId = localStorage.getItem("armyTgChatId") || "";
+  const tokenEl = document.getElementById("tgBotToken");
+  const chatEl = document.getElementById("tgChatId");
+  if (tokenEl) tokenEl.value = token;
+  if (chatEl) chatEl.value = chatId;
+}
+
+function saveTelegramConfig() {
+  const token = document.getElementById("tgBotToken").value.trim();
+  const chatId = document.getElementById("tgChatId").value.trim();
+  localStorage.setItem("armyTgToken", token);
+  localStorage.setItem("armyTgChatId", chatId);
+  showToast("✅ 텔레그램 알림 정보가 저장되었습니다.");
+}
+
+function sendTelegramNotification(userName, text, roomName) {
+  const token = localStorage.getItem("armyTgToken") || "";
+  const chatId = localStorage.getItem("armyTgChatId") || "";
+  if (!token || !chatId) return;
+
+  const now = new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
+  const message = `💬 [유가족지원 AI 소통방]\n\n• 방 코드: ${roomName}\n• 발신자: ${userName} (${now})\n• 내용: ${text}`;
+  const url = `https://api.telegram.org/bot${token}/sendMessage`;
+
+  fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, text: message })
+  }).catch(err => console.error("텔레그램 발송 오류:", err));
+}
 
 function initNotify(){
   const sw = document.getElementById('notifySwitch');
   if(sw){ if(notifyEnabled) sw.classList.add('on'); else sw.classList.remove('on'); }
   const sel = document.getElementById('notifySoundSel');
   if(sel) sel.value = notifySoundType;
-  if(notifyEnabled && 'Notification' in window && Notification.permission === 'default'){
-    Notification.requestPermission().catch(()=>{});
-  }
-  document.addEventListener('visibilitychange', ()=>{
-    if(!document.hidden && isChatPageVisible()){
-      clearUnread();
-    }
-  });
+  loadTelegramConfig();
 }
+
 function toggleNotify(){
   notifyEnabled = !notifyEnabled;
   localStorage.setItem('armyNotifyEnabled', notifyEnabled);
   const sw = document.getElementById('notifySwitch');
   if(sw) sw.classList.toggle('on', notifyEnabled);
   if(notifyEnabled){
-    if('Notification' in window && Notification.permission === 'default'){
-      Notification.requestPermission();
-    }
+    ensureAudioContext();
     showToast('🔔 알림이 켜졌습니다.');
   } else {
     showToast('🔕 알림이 꺼졌습니다.');
   }
 }
+
 function changeNotifySound(v){
   notifySoundType = v;
   localStorage.setItem('armyNotifySound', v);
   playNotifySound();
 }
+
 function isChatPageVisible(){
   const page = document.getElementById('chat');
   return page && page.classList.contains('active');
 }
+
 function clearUnread(){
   unreadCount = 0;
   const badge = document.getElementById('chatBadge');
   const nav = document.getElementById('navChat');
   if(badge){ badge.textContent = '0'; badge.style.display='none'; }
   if(nav) nav.classList.remove('has-notify');
-  if('setAppBadge' in navigator){ navigator.setAppBadge(0).catch(()=>{}); }
 }
+
 function bumpUnread(){
   if(isChatPageVisible() && !document.hidden) return;
   unreadCount++;
@@ -1447,17 +1498,14 @@ function bumpUnread(){
     badge.style.display = 'grid';
   }
   if(nav) nav.classList.add('has-notify');
-  if('setAppBadge' in navigator){ navigator.setAppBadge(unreadCount).catch(()=>{}); }
 }
+
 function playNotifySound(){
-  if(!notifyEnabled) return;
-  if(notifySoundType === 'none'){
-    if('vibrate' in navigator) navigator.vibrate([200,100,200]);
-    return;
-  }
+  if(!notifyEnabled || notifySoundType === 'none') return;
   try{
-    if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    ensureAudioContext();
     const ctx = audioCtx;
+    if(!ctx) return;
     const now = ctx.currentTime;
     if(notifySoundType === 'beep'){
       const osc = ctx.createOscillator(); const gain = ctx.createGain();
@@ -1482,9 +1530,9 @@ function playNotifySound(){
       gain.gain.exponentialRampToValueAtTime(0.01, now+0.5);
       osc.start(now); osc.stop(now+0.5);
     }
-    if('vibrate' in navigator) navigator.vibrate(120);
-  }catch(e){ console.log('sound err', e); }
+  }catch(e){}
 }
+
 function showToast(htmlMsg, duration=3500){
   const wrap = document.getElementById('toastWrap');
   if(!wrap) return;
@@ -1495,50 +1543,37 @@ function showToast(htmlMsg, duration=3500){
   wrap.appendChild(div);
   setTimeout(()=>{ div.style.opacity='0'; div.style.transform='translateY(-8px)'; div.style.transition='.3s'; setTimeout(()=>div.remove(),300); }, duration);
 }
+
 function showChatToast(msg){
   const name = esc(msg.userName||'담당자');
   const text = esc((msg.text||'').slice(0,60));
   showToast(`<div><b>${name}</b><div style="margin-top:2px;opacity:.9">${text}</div></div>`, 4000);
-  const nav = document.getElementById('navChat');
-  if(nav){ nav.classList.add('shake'); setTimeout(()=>nav.classList.remove('shake'),600); }
 }
+
 function triggerNewMessageAlarm(msg){
   if(!notifyEnabled) return;
   const session = JSON.parse(localStorage.getItem('armySession')||'null');
   const isMine = session && (msg.userId === (session.id||session.username));
   if(isMine) return;
+
   const visible = isChatPageVisible() && !document.hidden;
-  if(visible){
-    playNotifySound();
-  } else {
-    playNotifySound();
+  playNotifySound();
+  
+  if(!visible){
     bumpUnread();
     showChatToast(msg);
+  } else {
+    showChatToast(msg);
   }
-  if(!visible && 'Notification' in window && Notification.permission === 'granted'){
-    try{
-      const n = new Notification(`💬 ${msg.userName||'새 메시지'}`, {
-        body: (msg.text||'').slice(0,100),
-        tag: 'army-chat-'+msg.room
-      });
-      n.onclick = ()=>{ window.focus(); if(window.go) go('chat', document.getElementById('navChat')); n.close(); };
-    }catch(e){}
-  }
+
+  // 텔레그램 푸시 알림 수신
+  sendTelegramNotification(msg.userName || '담당자', msg.text || '', msg.room || currentRoom || '소통방');
 }
 function testNotify(){
-  const demo = { userName:'테스트', text:'새 메시지가 도착했습니다. 알림 테스트입니다!', userId:'test', room: currentRoom||'test' };
+  const demo = { userName:'테스트', text:'텔레그램 알림 연동 테스트 메시지입니다!', userId:'test', room: currentRoom||'테스트방' };
   playNotifySound();
   showChatToast(demo);
-  if('Notification' in window){
-    if(Notification.permission === 'default'){
-      Notification.requestPermission().then(p=>{
-        if(p==='granted') showToast('✅ 브라우저 알림 권한 허용됨');
-        else showToast('⚠️ 브라우저 알림 권한이 거부됨. 설정에서 허용해주세요.');
-      });
-    } else if(Notification.permission === 'denied'){
-      showToast('⚠️ 브라우저 알림이 차단됨. 주소창 자물쇠에서 허용해주세요.');
-    }
-  }
+  sendTelegramNotification(demo.userName, demo.text, demo.room);
 }
 
 function addChatMessage(msg, save=true){
@@ -1546,6 +1581,7 @@ function addChatMessage(msg, save=true){
  if(save) saveChat();
  renderChat();
 }
+
 function sendChat(){
  const input = document.getElementById("chatInput");
  if(!input) return;
@@ -1595,7 +1631,6 @@ function updatePeerList(){
  const peerCountEl = document.getElementById("peerCount");
  if(peerCountEl) peerCountEl.textContent = ids.length + 1;
 }
-
 function joinP2PChat(){
  const roomInput = document.getElementById("chatRoomCode");
  const room = (roomInput.value||"").trim();
@@ -1607,7 +1642,6 @@ function joinP2PChat(){
  document.getElementById("p2pStatus").textContent = "연결중...";
  document.getElementById("joinBtn").disabled = true;
 
- // 한글 방 코드를 안전한 영문/숫자 인코딩 해시 스트링으로 변환
  const safeRoom = Array.from(new TextEncoder().encode(room)).map(b => b.toString(16).padStart(2, '0')).join('');
  const myUniqueId = `army-v3-${safeRoom}-${Math.random().toString(36).slice(2, 7)}`;
  const hostId = `army-v3-${safeRoom}-host`;
@@ -1624,13 +1658,11 @@ function joinP2PChat(){
  peer.on('error', (err)=>{
   if(err.type === 'unavailable-id' || err.type === 'invalid-id'){
    peer = new Peer(myUniqueId);
-   
    peer.on('open', ()=>{
     onPeerConnected(room, session);
     const conn = peer.connect(hostId, { metadata: { name: session.name || session.username } });
     setupConn(conn);
    });
-   
    peer.on('connection', (conn) => setupConn(conn));
   } else {
    document.getElementById("p2pStatus").textContent = "연결 오류 (" + err.type + ")";
@@ -1688,14 +1720,8 @@ function setupConn(conn){
   }
  });
 
- conn.on('close', ()=>{
-  delete conns[conn.peer];
-  updatePeerList();
- });
- conn.on('error', ()=>{
-  delete conns[conn.peer];
-  updatePeerList();
- });
+ conn.on('close', ()=>{ delete conns[conn.peer]; updatePeerList(); });
+ conn.on('error', ()=>{ delete conns[conn.peer]; updatePeerList(); });
 }
 
 function clearChat(){ if(!confirm("모든 대화기록을 삭제하시겠습니까?")) return; chatMessages=[]; saveChat(); renderChat(); }
@@ -1705,7 +1731,6 @@ function exportChat(){
  const a=document.createElement("a"); a.href=url; a.download=`army-chat-${new Date().toISOString().slice(0,10)}.txt`; a.click(); URL.revokeObjectURL(url);
 }
 
-function initNotifyWrapper(){ try{initNotify();}catch(e){} }
 (function initChat(){
  loadChat();
  const origGo = window.go;
@@ -1721,7 +1746,7 @@ function initNotifyWrapper(){ try{initNotify();}catch(e){} }
    setTimeout(()=>{ renderChat(); clearUnread(); },50);
   }
  };
-  setTimeout(initNotifyWrapper, 500);
+ setTimeout(()=> { try{ initNotify(); }catch(e){} }, 500);
 })();
 </script>
 
