@@ -1433,19 +1433,38 @@ function saveTelegramConfig() {
 }
 
 function sendTelegramNotification(userName, text, roomName) {
-  const token = localStorage.getItem("armyTgToken") || "";
-  const chatId = localStorage.getItem("armyTgChatId") || "";
-  if (!token || !chatId) return;
-
+  // 통합: 두 가지 키 모두 지원 (기존 호환)
+  const token = (localStorage.getItem("armyTgToken") || localStorage.getItem("telegramBotToken") || document.getElementById("tgBotToken")?.value || "").trim();
+  const chatId = (localStorage.getItem("armyTgChatId") || localStorage.getItem("telegramChatId") || document.getElementById("tgChatId")?.value || "").trim();
+  if (!token || !chatId) {
+    console.warn("텔레그램 토큰/ChatID 없음 - 연결안됨이어도 보내려면 설정 저장 필요");
+    return;
+  }
   const now = new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
-  const message = `💬 [유가족지원 AI 소통방]\n\n• 방 코드: ${roomName}\n• 발신자: ${userName} (${now})\n• 내용: ${text}`;
-  const url = `https://api.telegram.org/bot${token}/sendMessage`;
+  const message = `💬 [유가족지원 AI]\n방: ${roomName||currentRoom||'소통방'}\n보낸이: ${userName} (${now})\n내용: ${text}`;
 
-  fetch(url, {
+  // 통합: POST + GET fallback (CORS 대응)
+  const postUrl = `https://api.telegram.org/bot${token}/sendMessage`;
+  fetch(postUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ chat_id: chatId, text: message })
-  }).catch(err => console.error("텔레그램 발송 오류:", err));
+  }).then(r=>r.json()).then(d=>{
+    console.log("텔레그램 POST 결과:", d);
+    if(!d.ok){
+      // GET 재시도
+      const getUrl = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${encodeURIComponent(chatId)}&text=${encodeURIComponent(message)}`;
+      return fetch(getUrl).then(r=>r.json());
+    }
+    return d;
+  }).then(d=>{ if(d) console.log("텔레그램 최종:", d); }).catch(err => {
+    console.error("텔레그램 발송 오류:", err);
+    // 최후: GET으로 한 번 더
+    try{
+      const getUrl = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${encodeURIComponent(chatId)}&text=${encodeURIComponent(message)}`;
+      fetch(getUrl).catch(()=>{});
+    }catch(e){}
+  });
 }
 
 function initNotify(){
@@ -1487,7 +1506,6 @@ function clearUnread(){
   if(badge){ badge.textContent = '0'; badge.style.display='none'; }
   if(nav) nav.classList.remove('has-notify');
 }
-
 function bumpUnread(){
   if(isChatPageVisible() && !document.hidden) return;
   unreadCount++;
@@ -1569,11 +1587,16 @@ function triggerNewMessageAlarm(msg){
   // 텔레그램 푸시 알림 수신
   sendTelegramNotification(msg.userName || '담당자', msg.text || '', msg.room || currentRoom || '소통방');
 }
+
 function testNotify(){
-  const demo = { userName:'테스트', text:'텔레그램 알림 연동 테스트 메시지입니다!', userId:'test', room: currentRoom||'테스트방' };
+  const roomInput = document.getElementById("chatRoomCode");
+  const room = currentRoom || (roomInput?.value||"").trim() || '테스트방';
+  const demo = { userName:'테스트', text:'텔레그램 알림 연동 테스트 메시지입니다! (연결안됨 상태에서도 전송)', userId:'test', room: room };
   playNotifySound();
   showChatToast(demo);
+  // 연결 상태 상관없이 무조건 전송
   sendTelegramNotification(demo.userName, demo.text, demo.room);
+  showToast("테스트 텔레그램 전송 시도중...");
 }
 
 function addChatMessage(msg, save=true){
@@ -1589,7 +1612,16 @@ function sendChat(){
  if(!text) return;
  const session = JSON.parse(localStorage.getItem("armySession")||"null");
  if(!session){ alert("로그인이 필요합니다."); return; }
- if(!currentRoom){ alert("먼저 방 코드를 입력하고 연결을 눌러주세요."); return; }
+ // ★ 통합 수정: 방 코드가 입력되어 있으면 currentRoom 자동 설정 (연결 안됨이어도 허용)
+ const roomInput = document.getElementById("chatRoomCode");
+ const roomFromInput = (roomInput?.value||"").trim();
+ if(!currentRoom && roomFromInput){
+   currentRoom = roomFromInput;
+ }
+ if(!currentRoom){ 
+   // 방 코드도 없으면 기본방 사용
+   currentRoom = "육군-유가족-1";
+ }
  const msg = {
   id: Date.now() + Math.random().toString(36).slice(2),
   userId: session.id || session.username,
@@ -1600,11 +1632,19 @@ function sendChat(){
  };
  addChatMessage(msg, true);
  
- Object.values(conns).forEach(c=>{
-  try{ c.send({type:'chat', data: msg}); }catch(e){}
- });
+ // P2P 연결된 곳이 있으면 전송
+ const connCount = Object.keys(conns).length;
+ if(connCount>0){
+   Object.values(conns).forEach(c=>{
+    try{ c.send({type:'chat', data: msg}); }catch(e){}
+   });
+ }
+ // ★ 핵심: 연결 안됨 상태에서도 텔레그램은 무조건 전송
+ sendTelegramNotification(msg.userName, msg.text, msg.room);
+ 
  input.value = "";
- if(typeof addLog === 'function') addLog(`채팅 전송: ${text.slice(0,30)}`);
+ if(typeof addLog === 'function') addLog(`채팅 전송: ${text.slice(0,30)} (연결:${connCount}명, 텔레그램 전송 시도)`);
+ showToast(connCount>0 ? "전송됨 (P2P + 텔레그램)" : "연결 안됨이지만 텔레그램으로 전송됨");
 }
 
 function handleIncomingChat(msg){
@@ -1631,6 +1671,7 @@ function updatePeerList(){
  const peerCountEl = document.getElementById("peerCount");
  if(peerCountEl) peerCountEl.textContent = ids.length + 1;
 }
+
 function joinP2PChat(){
  const roomInput = document.getElementById("chatRoomCode");
  const room = (roomInput.value||"").trim();
@@ -1642,8 +1683,8 @@ function joinP2PChat(){
  document.getElementById("p2pStatus").textContent = "연결중...";
  document.getElementById("joinBtn").disabled = true;
 
- const safeRoom = Array.from(new TextEncoder().encode(room)).map(b => b.toString(16).padStart(2, '0')).join('');
- const myUniqueId = `army-v3-${safeRoom}-${Math.random().toString(36).slice(2, 7)}`;
+ const safeRoom = (()=>{ let h=0; for(let i=0;i<room.length;i++) h=(h*31+room.charCodeAt(i))>>>0; return h.toString(16).padStart(8,'0'); })();
+ const myUniqueId = `army-v3-${safeRoom}-${Math.random().toString(36).slice(2, 5)}`;
  const hostId = `army-v3-${safeRoom}-host`;
 
  if(peer){ try{ peer.destroy(); }catch(e){} }
@@ -1751,4 +1792,4 @@ function exportChat(){
 </script>
 
 </body>
-</html>
+   </html>
