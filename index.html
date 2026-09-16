@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#173e64">
 <title>육군 유가족지원 AI</title>
 
-<!-- PeerJS 라이브러리 추가 (P2P 통신 필수) -->
+<!-- PeerJS 라이브러리 (P2P 실시간 통신 필수) -->
 <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 
 <style>
@@ -1307,7 +1307,7 @@ window.transcribeSelectedAudio = async function(){
 function escapeHtml(value){ return String(value ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;"); }
 </script>
 
-<!-- P2P 업무 소통방 전용 JS (수정완료) -->
+<!-- P2P 업무 소통방 전용 JS (한글 인코딩 및 Peer 오류 완충 완전 보완) -->
 <script>
 let chatMessages = [];
 let peer = null;
@@ -1416,9 +1416,10 @@ function joinP2PChat(){
  document.getElementById("p2pStatus").textContent = "연결중...";
  document.getElementById("joinBtn").disabled = true;
 
- const safeRoom = encodeURIComponent(room).replace(/%/g, '-');
- const myUniqueId = `army-v2-${safeRoom}-${Math.random().toString(36).slice(2, 7)}`;
- const hostId = `army-v2-${safeRoom}-host`;
+ // 한글 방 코드를 안전한 영문/숫자 인코딩 해시 스트링으로 변환
+ const safeRoom = Array.from(new TextEncoder().encode(room)).map(b => b.toString(16).padStart(2, '0')).join('');
+ const myUniqueId = `army-v3-${safeRoom}-${Math.random().toString(36).slice(2, 7)}`;
+ const hostId = `army-v3-${safeRoom}-host`;
 
  if(peer){ try{ peer.destroy(); }catch(e){} }
  conns = {};
@@ -1430,7 +1431,7 @@ function joinP2PChat(){
  });
 
  peer.on('error', (err)=>{
-  if(err.type === 'unavailable-id'){
+  if(err.type === 'unavailable-id' || err.type === 'invalid-id'){
    peer = new Peer(myUniqueId);
    
    peer.on('open', ()=>{
@@ -1441,7 +1442,7 @@ function joinP2PChat(){
    
    peer.on('connection', (conn) => setupConn(conn));
   } else {
-   document.getElementById("p2pStatus").textContent = "연결 오류";
+   document.getElementById("p2pStatus").textContent = "연결 오류 (" + err.type + ")";
    document.getElementById("p2pStatus").style.color = "#d64545";
    document.getElementById("joinBtn").disabled = false;
   }
@@ -1459,6 +1460,7 @@ function onPeerConnected(room, session){
  document.getElementById("joinBtn").disabled = false;
  updatePeerList();
 }
+
 function setupConn(conn){
  conn.on('open', ()=>{
   conns[conn.peer] = conn;
@@ -1531,4 +1533,4 @@ function exportChat(){
 </script>
 
 </body>
-</html>
+   </html>
