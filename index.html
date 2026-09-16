@@ -151,10 +151,29 @@ hr{ border:0; border-top:1px solid #e5e9ee; margin:18px 0 }
  .bottom, header, button{ display:none!important }
  .app{ max-width:none }
 }
+
+/* 알림 기능 추가 */
+.chat-notify-bar{ display:flex; align-items:center; gap:8px; padding:8px 12px; background:#fff8e6; border:1px solid #ffe4a6; border-radius:10px; margin-bottom:10px; font-size:11px }
+.chat-notify-bar label{ display:flex; align-items:center; gap:6px; font-size:11px; font-weight:700; color:#8a5d00; margin:0 }
+.switch{ position:relative; width:38px; height:22px; background:#d0d5dd; border-radius:22px; cursor:pointer; transition:.2s }
+.switch.on{ background:#12b76a }
+.switch::after{ content:""; position:absolute; width:18px; height:18px; background:#fff; border-radius:50%; top:2px; left:2px; transition:.2s; box-shadow:0 1px 3px #0003 }
+.switch.on::after{ left:18px }
+.nav .badge-dot{ position:absolute; top:4px; right:14px; min-width:18px; height:18px; background:#f04438; color:#fff; border-radius:9px; font-size:10px; font-weight:900; display:none; place-items:center; padding:0 5px; }
+.nav.has-notify .badge-dot{ display:grid }
+.toast-wrap{ position:fixed; top:70px; left:50%; transform:translateX(-50%); z-index:200; width:90%; max-width:400px; pointer-events:none }
+.toast{ background:#172033; color:#fff; padding:12px 14px; border-radius:12px; font-size:12px; box-shadow:0 8px 24px #0004; margin-bottom:8px; display:flex; gap:10px; align-items:flex-start; animation:toastIn .3s ease; pointer-events:auto; cursor:pointer }
+.toast b{ color:#7cc4ff }
+@keyframes toastIn{ from{ transform:translateY(-12px); opacity:0 } to{ transform:translateY(0); opacity:1 } }
+@keyframes shake{ 0%,100%{transform:translateX(0)} 25%{transform:translateX(-3px)} 75%{transform:translateX(3px)} }
+.shake{ animation:shake .3s ease 2 }
+
 </style>
 </head>
 
 <body>
+<div id="toastWrap" class="toast-wrap"></div>
+<audio id="notifySound" preload="auto" style="display:none"></audio>
 
 <!-- 보안경고 -->
 <div id="securityModal" class="security-modal">
@@ -291,6 +310,7 @@ hr{ border:0; border-top:1px solid #e5e9ee; margin:18px 0 }
  <div style="height:12px"></div>
  <div id="caseList"></div>
 </section>
+
 <!-- DETAIL -->
 <section id="detail" class="page">
  <div onclick="go('cases')" style="color:#246bd2; font-size:13px; margin-bottom:12px; cursor:pointer">← 사건목록</div>
@@ -395,10 +415,22 @@ hr{ border:0; border-top:1px solid #e5e9ee; margin:18px 0 }
   <div id="todoList"></div>
  </div>
 </section>
+
 <!-- CHAT -->
 <section id="chat" class="page">
  <h1>💬 업무 소통방</h1>
  <p class="sub">동일한 방 코드를 입력하면 담당자 간 실시간으로 메시지를 주고받을 수 있습니다.</p>
+ <div class="chat-notify-bar" id="notifyBar">
+  <label><div class="switch on" id="notifySwitch" onclick="toggleNotify()"></div> 새 메시지 알림</label>
+  <span style="flex:1"></span>
+  <select id="notifySoundSel" style="width:auto;margin:0;padding:6px 8px;font-size:11px;border-radius:8px" onchange="changeNotifySound(this.value)">
+   <option value="beep">기본 비프음</option>
+   <option value="chime">차임벨</option>
+   <option value="ding">딩동</option>
+   <option value="none">무음 (진동만)</option>
+  </select>
+  <button class="secondary" style="padding:6px 10px;font-size:10px" onclick="testNotify()">테스트</button>
+ </div>
  <div class="box" style="padding:12px">
   <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
    <label style="margin:0">방 코드</label>
@@ -484,7 +516,7 @@ hr{ border:0; border-top:1px solid #e5e9ee; margin:18px 0 }
  <div class="nav" onclick="go('consult',this)"><b>📞</b>상담</div>
  <div class="nav" onclick="go('ai',this)"><b>🤖</b>AI</div>
  <div class="nav" onclick="go('follow',this)"><b>✅</b>관리</div>
- <div class="nav" onclick="go('chat',this)"><b>💬</b>소통방</div>
+ <div class="nav" id="navChat" onclick="go('chat',this)" style="position:relative"><b>💬</b>소통방<span class="badge-dot" id="chatBadge">0</span></div>
 </nav>
 </div>
 
@@ -562,6 +594,7 @@ hr{ border:0; border-top:1px solid #e5e9ee; margin:18px 0 }
 <!-- 프로그램 기본 JS -->
 <script>
 "use strict";
+
 const DB_KEY = "armyFamilySupport_integrated_v9";
 let session = JSON.parse(localStorage.getItem("armySession") || "null");
 let db = JSON.parse(localStorage.getItem(DB_KEY) || "null");
@@ -636,7 +669,6 @@ function login(){
  addLog("로그인");
  startApp();
 }
-
 function logout(){
  addLog("로그아웃");
  localStorage.removeItem("armySession");
@@ -645,6 +677,7 @@ function logout(){
  document.getElementById("loginScreen").classList.remove("hidden");
  document.querySelector(".watermark")?.remove();
 }
+
 function startApp(){
  document.getElementById("loginScreen").classList.add("hidden");
  document.getElementById("app").classList.remove("hidden");
@@ -686,6 +719,7 @@ function go(id, el, isBack = false){
  if (!isBack && history.state?.page !== id) { history.pushState({ page: id }, "", `#${id}`); }
  window.scrollTo(0,0);
 }
+
 window.addEventListener("popstate", (e) => {
  if (e.state && e.state.page) { go(e.state.page, null, true); } else { go("home", null, true); }
 });
@@ -697,7 +731,6 @@ function goNav(pageId, navIndex){
 
 function openModal(id){ document.getElementById(id).classList.add("show"); }
 function closeModal(id){ document.getElementById(id).classList.remove("show"); }
-
 function applyUser(){
  const id = document.getElementById("applyId").value.trim();
  const pw = document.getElementById("applyPw").value;
@@ -949,7 +982,6 @@ function prepareConsult(id){
  document.getElementById("consultFollow").value="";
  go("consult");
 }
-
 function clearConsultAudio(){
  window.currentAudioFile=null;
  const fileInput = document.getElementById("audioFile"); if(fileInput) fileInput.value="";
@@ -958,6 +990,7 @@ function clearConsultAudio(){
  const status = document.getElementById("transcribeStatus"); if(status) status.innerHTML="";
  const button = document.getElementById("transcribeBtn"); if(button) button.disabled=true;
 }
+
 function saveConsult(){
  const caseId = document.getElementById("consultCase").value;
  const text = document.getElementById("consultText").value.trim();
@@ -1062,6 +1095,7 @@ function toggleTodoDone(id){
  const x = db.todos.find(x => x.id === id);
  if(x){ x.done = !x.done; addLog(x.done ? "후속조치 완료" : "후속조치 완료 취소", x.text); saveDB(); refresh(); }
 }
+
 function editTodo(id){ openTodo(id); }
 function deleteTodo(id){
  const x = db.todos.find(item => item.id === id); if(!x) return;
@@ -1250,6 +1284,7 @@ async function loadWhisper(){
   return whisperTranscriber;
  }finally{ whisperLoading=false; }
 }
+
 async function decodeAudioFile(file){
  const arrayBuffer = await file.arrayBuffer();
  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -1303,7 +1338,6 @@ window.transcribeSelectedAudio = async function(){
   document.getElementById("transcribeStatus").innerHTML = `<div class="alert">❌ 음성 문자변환 오류<br><br>${escapeHtml(message)}<br><br>MP3 / WAV / M4A / WEBM 등의 음성파일을 사용해주세요.</div>`;
  }finally{ button.disabled=false; }
 };
-
 function escapeHtml(value){ return String(value ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;"); }
 </script>
 
@@ -1324,7 +1358,6 @@ function loadChat(){
 function saveChat(){
  localStorage.setItem("armyChat", JSON.stringify(chatMessages.slice(-500)));
 }
-
 function renderChat(){
  const list = document.getElementById("chatList");
  if(!list) return;
@@ -1352,12 +1385,167 @@ function renderChat(){
  if(peerCountEl) peerCountEl.textContent = Object.keys(conns).length + 1;
 }
 
+
+/* ========= 알림 기능 ========= */
+let notifyEnabled = (localStorage.getItem('armyNotifyEnabled') !== 'false');
+let notifySoundType = localStorage.getItem('armyNotifySound') || 'beep';
+let unreadCount = 0;
+let audioCtx = null;
+
+function initNotify(){
+  const sw = document.getElementById('notifySwitch');
+  if(sw){ if(notifyEnabled) sw.classList.add('on'); else sw.classList.remove('on'); }
+  const sel = document.getElementById('notifySoundSel');
+  if(sel) sel.value = notifySoundType;
+  if(notifyEnabled && 'Notification' in window && Notification.permission === 'default'){
+    Notification.requestPermission().catch(()=>{});
+  }
+  document.addEventListener('visibilitychange', ()=>{
+    if(!document.hidden && isChatPageVisible()){
+      clearUnread();
+    }
+  });
+}
+function toggleNotify(){
+  notifyEnabled = !notifyEnabled;
+  localStorage.setItem('armyNotifyEnabled', notifyEnabled);
+  const sw = document.getElementById('notifySwitch');
+  if(sw) sw.classList.toggle('on', notifyEnabled);
+  if(notifyEnabled){
+    if('Notification' in window && Notification.permission === 'default'){
+      Notification.requestPermission();
+    }
+    showToast('🔔 알림이 켜졌습니다.');
+  } else {
+    showToast('🔕 알림이 꺼졌습니다.');
+  }
+}
+function changeNotifySound(v){
+  notifySoundType = v;
+  localStorage.setItem('armyNotifySound', v);
+  playNotifySound();
+}
+function isChatPageVisible(){
+  const page = document.getElementById('chat');
+  return page && page.classList.contains('active');
+}
+function clearUnread(){
+  unreadCount = 0;
+  const badge = document.getElementById('chatBadge');
+  const nav = document.getElementById('navChat');
+  if(badge){ badge.textContent = '0'; badge.style.display='none'; }
+  if(nav) nav.classList.remove('has-notify');
+  if('setAppBadge' in navigator){ navigator.setAppBadge(0).catch(()=>{}); }
+}
+function bumpUnread(){
+  if(isChatPageVisible() && !document.hidden) return;
+  unreadCount++;
+  const badge = document.getElementById('chatBadge');
+  const nav = document.getElementById('navChat');
+  if(badge){
+    badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+    badge.style.display = 'grid';
+  }
+  if(nav) nav.classList.add('has-notify');
+  if('setAppBadge' in navigator){ navigator.setAppBadge(unreadCount).catch(()=>{}); }
+}
+function playNotifySound(){
+  if(!notifyEnabled) return;
+  if(notifySoundType === 'none'){
+    if('vibrate' in navigator) navigator.vibrate([200,100,200]);
+    return;
+  }
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    const ctx = audioCtx;
+    const now = ctx.currentTime;
+    if(notifySoundType === 'beep'){
+      const osc = ctx.createOscillator(); const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.setValueAtTime(880, now);
+      osc.frequency.setValueAtTime(1320, now+0.12);
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now+0.35);
+      osc.start(now); osc.stop(now+0.35);
+    } else if(notifySoundType === 'chime'){
+      [523.25,659.25,783.99].forEach((freq,i)=>{
+        const o = ctx.createOscillator(); const g = ctx.createGain();
+        o.type='sine'; o.frequency.value=freq; o.connect(g); g.connect(ctx.destination);
+        g.gain.setValueAtTime(0.25, now+i*0.1); g.gain.exponentialRampToValueAtTime(0.01, now+i*0.1+0.6);
+        o.start(now+i*0.1); o.stop(now+i*0.1+0.6);
+      });
+    } else if(notifySoundType === 'ding'){
+      const osc = ctx.createOscillator(); const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.setValueAtTime(1200, now);
+      gain.gain.setValueAtTime(0.35, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now+0.5);
+      osc.start(now); osc.stop(now+0.5);
+    }
+    if('vibrate' in navigator) navigator.vibrate(120);
+  }catch(e){ console.log('sound err', e); }
+}
+function showToast(htmlMsg, duration=3500){
+  const wrap = document.getElementById('toastWrap');
+  if(!wrap) return;
+  const div = document.createElement('div');
+  div.className = 'toast';
+  div.innerHTML = htmlMsg;
+  div.onclick = ()=>{ div.remove(); if(window.go) go('chat', document.getElementById('navChat')); };
+  wrap.appendChild(div);
+  setTimeout(()=>{ div.style.opacity='0'; div.style.transform='translateY(-8px)'; div.style.transition='.3s'; setTimeout(()=>div.remove(),300); }, duration);
+}
+function showChatToast(msg){
+  const name = esc(msg.userName||'담당자');
+  const text = esc((msg.text||'').slice(0,60));
+  showToast(`<div><b>${name}</b><div style="margin-top:2px;opacity:.9">${text}</div></div>`, 4000);
+  const nav = document.getElementById('navChat');
+  if(nav){ nav.classList.add('shake'); setTimeout(()=>nav.classList.remove('shake'),600); }
+}
+function triggerNewMessageAlarm(msg){
+  if(!notifyEnabled) return;
+  const session = JSON.parse(localStorage.getItem('armySession')||'null');
+  const isMine = session && (msg.userId === (session.id||session.username));
+  if(isMine) return;
+  const visible = isChatPageVisible() && !document.hidden;
+  if(visible){
+    playNotifySound();
+  } else {
+    playNotifySound();
+    bumpUnread();
+    showChatToast(msg);
+  }
+  if(!visible && 'Notification' in window && Notification.permission === 'granted'){
+    try{
+      const n = new Notification(`💬 ${msg.userName||'새 메시지'}`, {
+        body: (msg.text||'').slice(0,100),
+        tag: 'army-chat-'+msg.room
+      });
+      n.onclick = ()=>{ window.focus(); if(window.go) go('chat', document.getElementById('navChat')); n.close(); };
+    }catch(e){}
+  }
+}
+function testNotify(){
+  const demo = { userName:'테스트', text:'새 메시지가 도착했습니다. 알림 테스트입니다!', userId:'test', room: currentRoom||'test' };
+  playNotifySound();
+  showChatToast(demo);
+  if('Notification' in window){
+    if(Notification.permission === 'default'){
+      Notification.requestPermission().then(p=>{
+        if(p==='granted') showToast('✅ 브라우저 알림 권한 허용됨');
+        else showToast('⚠️ 브라우저 알림 권한이 거부됨. 설정에서 허용해주세요.');
+      });
+    } else if(Notification.permission === 'denied'){
+      showToast('⚠️ 브라우저 알림이 차단됨. 주소창 자물쇠에서 허용해주세요.');
+    }
+  }
+}
+
 function addChatMessage(msg, save=true){
  chatMessages.push(msg);
  if(save) saveChat();
  renderChat();
 }
-
 function sendChat(){
  const input = document.getElementById("chatInput");
  if(!input) return;
@@ -1385,7 +1573,10 @@ function sendChat(){
 
 function handleIncomingChat(msg){
  if(!chatMessages.find(x => x.id === msg.id)){
-  addChatMessage(msg, true);
+  chatMessages.push(msg);
+  saveChat();
+  renderChat();
+  triggerNewMessageAlarm(msg);
  }
 }
 
@@ -1514,6 +1705,7 @@ function exportChat(){
  const a=document.createElement("a"); a.href=url; a.download=`army-chat-${new Date().toISOString().slice(0,10)}.txt`; a.click(); URL.revokeObjectURL(url);
 }
 
+function initNotifyWrapper(){ try{initNotify();}catch(e){} }
 (function initChat(){
  loadChat();
  const origGo = window.go;
@@ -1526,11 +1718,12 @@ function exportChat(){
    if(el) el.classList.add("active");
   }
   if(page==="chat"){
-   setTimeout(renderChat,50);
+   setTimeout(()=>{ renderChat(); clearUnread(); },50);
   }
  };
+  setTimeout(initNotifyWrapper, 500);
 })();
 </script>
 
 </body>
-   </html>
+</html>
