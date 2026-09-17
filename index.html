@@ -1564,11 +1564,11 @@ function updatePeerList(){
 }
 
 
-// ====== FIX: 한글 방 코드 안전 변환 + 방 목록 관리 (추가됨) ======
+// ===== FIX V2: 한글 방 코드 안전 변환 + 방 목록 관리 (전체 재구현) ======
 function slugifyRoomForId(room){
   room = (room||"").trim();
-  // 이미 해시된 안전한 ID면 그대로 사용
-  if(/^[a-z0-9-]+$/i.test(room) && room.length<30 && !/[가-힣]/.test(room)) return room.toLowerCase();
+  if(!room) return "default";
+  if(/^[a-z0-9-]{3,30}$/.test(room) && !/[가-힣]/.test(room)) return room.toLowerCase();
   let h=0; for(let i=0;i<room.length;i++) h=(h*31+room.charCodeAt(i))>>>0;
   const hash = h.toString(16).padStart(8,'0');
   const ascii = room.toLowerCase().replace(/[^a-z0-9-]/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'').slice(0,12) || 'room';
@@ -1576,48 +1576,47 @@ function slugifyRoomForId(room){
 }
 function getRoomListKey(){ return "armyRoomList"; }
 function getDefaultRoomKey(){ return "armyDefaultRoom"; }
-
 function renderRoomList(){
   const sel = document.getElementById("roomSelectDropdown");
   const box = document.getElementById("roomSelectBox");
   if(!sel) return;
   try{
-    const list = JSON.parse(localStorage.getItem(getRoomListKey())||"[]");
+    let list = [];
+    try{ list = JSON.parse(localStorage.getItem(getRoomListKey())||"[]"); }catch(e){ list=[]; }
     const def = localStorage.getItem(getDefaultRoomKey()) || localStorage.getItem(getLastRoomKey()) || "";
     sel.innerHTML = "";
     if(list.length===0){
-      sel.innerHTML = `<option value="">(저장된 방 없음 - 새 방을 생성하세요)</option>`;
-      if(box) box.innerHTML = `<div style="font-size:11px;color:#8793a3">아직 저장된 방이 없습니다. 방 코드를 입력하고 '새 방 생성'을 눌러보세요.</div>`;
+      sel.innerHTML = `<option value="">(저장된 방 없음 - 새 방 생성 필요)</option>`;
+      if(box) box.innerHTML = `<div style="font-size:11px;color:#8793a3;padding:6px">저장된 방 없음. 방 코드를 입력하고 <b>새 방 생성</b>을 누르세요.</div>`;
     } else {
       list.forEach(r=>{
         const opt=document.createElement("option");
-        opt.value=r.code; 
-        opt.textContent = `${r.code} ${r.code===def?'★기본':''}`;
+        opt.value=r.code;
+        opt.textContent = r.code + (r.code===def ? " ★기본" : "");
         if(r.code===def) opt.selected=true;
         sel.appendChild(opt);
       });
       if(box){
-        box.innerHTML = list.map(r=>`<div style="display:flex;gap:6px;align-items:center;margin:4px 0;font-size:12px">
-          <span style="flex:1">${r.code} <small style="color:#8a96a6">(${r.safeId})</small> ${r.code===def?'<b style="color:#1d5fae">★기본방</b>':''}</span>
-          <button onclick="selectRoom('${r.code.replace(/'/g,"\\'")}')" style="padding:4px 8px;font-size:11px">입장</button>
-          <button onclick="deleteRoom('${r.code.replace(/'/g,"\\'")}')" class="gray" style="padding:4px 8px;font-size:11px">삭제</button>
-        </div>`).join("");
+        box.innerHTML = list.map(r=>{
+          const safe = r.code.replace(/'/g, "&#39;");
+          return `<div style="display:flex;gap:6px;align-items:center;margin:4px 0;font-size:12px"><span style="flex:1">${r.code} <small style="color:#8a96a6">(${r.safeId||''})</small> ${r.code===def?'<b style="color:#1d5fae">★</b>':''}</span><button onclick="selectRoom('${safe}')" style="padding:4px 8px;font-size:11px">입장</button><button onclick="deleteRoom('${safe}')" class="gray" style="padding:4px 8px;font-size:11px">삭제</button></div>`;
+        }).join("");
       }
     }
-    // 방 코드 input 기본값
     const input=document.getElementById("chatRoomCode");
     if(def && input && !input.value) input.value=def;
   }catch(e){
-    console.error("renderRoomList 실패", e);
-    sel.innerHTML = `<option>로딩 실패: ${e.message}</option>`;
+    console.error(e);
+    const sel2=document.getElementById("roomSelectDropdown");
+    if(sel2) sel2.innerHTML = `<option>오류: ${e.message}</option>`;
   }
 }
 function createNewRoom(){
-  const input = document.getElementById("chatRoomCode");
-  let code = (input?.value||"").trim();
-  if(!code) code = `육군-유가족-${Math.floor(Math.random()*100)+1}`;
-  const safeId = slugifyRoomForId(code);
-  let list = JSON.parse(localStorage.getItem(getRoomListKey())||"[]");
+  const input=document.getElementById("chatRoomCode");
+  let code=(input?.value||"").trim();
+  if(!code) code=`육군-유가족-${Math.floor(Math.random()*90)+10}`;
+  const safeId=slugifyRoomForId(code);
+  let list=[]; try{ list=JSON.parse(localStorage.getItem(getRoomListKey())||"[]"); }catch(e){ list=[]; }
   if(!list.find(x=>x.code===code)){
     list.unshift({code, safeId, created:Date.now()});
     localStorage.setItem(getRoomListKey(), JSON.stringify(list.slice(0,30)));
@@ -1625,20 +1624,18 @@ function createNewRoom(){
   localStorage.setItem(getDefaultRoomKey(), code);
   localStorage.setItem(getLastRoomKey(), code);
   renderRoomList();
-  if(typeof showToast==='function') showToast(`새 방 생성: ${code} (기본방 저장됨)`);
-  else alert(`새 방 생성: ${code}`);
+  if(typeof showToast==='function') showToast(`새 방 생성: ${code}`);
   switchRoom(code);
 }
 function setAsDefaultRoom(){
-  const input = document.getElementById("chatRoomCode");
-  const sel = document.getElementById("roomSelectDropdown");
-  const code = (sel?.value || input?.value || "").trim();
-  if(!code){ alert("방 코드를 선택하거나 입력하세요"); return; }
+  const input=document.getElementById("chatRoomCode");
+  const sel=document.getElementById("roomSelectDropdown");
+  const code=(sel?.value || input?.value || "").trim();
+  if(!code){ alert("방 코드를 선택하세요"); return; }
   localStorage.setItem(getDefaultRoomKey(), code);
   localStorage.setItem(getLastRoomKey(), code);
   renderRoomList();
   if(typeof showToast==='function') showToast(`기본방 지정: ${code}`);
-  else alert(`기본방 지정: ${code}`);
 }
 function selectRoom(code){
   if(!code) return;
@@ -1647,13 +1644,13 @@ function selectRoom(code){
   switchRoom(code);
 }
 function deleteRoom(code){
-  if(!confirm(`[${code}] 방을 목록에서 삭제할까요? 대화기록은 유지됩니다.`)) return;
-  let list = JSON.parse(localStorage.getItem(getRoomListKey())||"[]");
-  list = list.filter(x=>x.code!==code);
+  if(!confirm(`[${code}] 삭제?`)) return;
+  let list=[]; try{ list=JSON.parse(localStorage.getItem(getRoomListKey())||"[]"); }catch(e){}
+  list=list.filter(x=>x.code!==code);
   localStorage.setItem(getRoomListKey(), JSON.stringify(list));
   renderRoomList();
 }
-// ====== END FIX ======
+// ===== END FIX V2 =====
 
 
 function switchRoom(newRoom){
@@ -1678,9 +1675,9 @@ function joinP2PChat(roomParam){
   const roomInput = document.getElementById("chatRoomCode");
   let rawRoom = (roomParam || roomInput?.value || "").trim();
   if(!rawRoom){ alert("방 코드를 입력하세요"); return; }
-  let room = rawRoom; // 표시용 원본 유지
-  let safeRoom = (typeof slugifyRoomForId==='function'? slugifyRoomForId(rawRoom) : (()=>{ let h=0; for(let i=0;i<rawRoom.length;i++) h=(h*31+rawRoom.charCodeAt(i))>>>0; return h.toString(16).padStart(8,'0'); })());
-  if(!room){ alert("방 코드를 입력하세요. 영문소문자+숫자 권장 (예: family01)"); return; }
+  let room = rawRoom;
+  const safeRoom = slugifyRoomForId(rawRoom);
+
   const session = JSON.parse(localStorage.getItem("armySession")||"null");
   if(!session){ alert("로그인이 필요합니다."); return; }
 
@@ -1693,20 +1690,18 @@ function joinP2PChat(roomParam){
   localStorage.setItem(getLastRoomKey(), room);
   loadChat(room);
   renderChat();
-
   const statusEl = document.getElementById("p2pStatus");
   const joinBtn = document.getElementById("joinBtn");
   if(statusEl){ statusEl.textContent = "연결중... ("+room+")"; statusEl.style.color = "#667085"; }
   if(joinBtn){ joinBtn.disabled = true; joinBtn.textContent = "연결중..."; }
 
-  // safeRoom 이미 위에서 생성됨
   const myUniqueId = `army-v3-${safeRoom}-${Math.random().toString(36).slice(2,4)}${Date.now().toString(36).slice(-3)}`;
   const hostId = `army-v3-${safeRoom}-host`;
 
   if(peer){ try{ peer.destroy(); }catch(e){} }
   conns = {};
 
-  const peerOptions = {
+  const peerOptionsLocal = {
     config: { 
       iceServers: [ 
         {urls:"stun:stun.l.google.com:19302"}, 
@@ -1723,12 +1718,12 @@ function joinP2PChat(roomParam){
 
   function createHost(){
     console.log("[P2P] host 시도", hostId);
-    peer = new Peer(hostId, peerOptions);
+    peer = new Peer(hostId, peerOptionsLocal);
     bindPeerEvents(true);
   }
   function createClient(){
     console.log("[P2P] client 시도", myUniqueId, "->", hostId);
-    peer = new Peer(myUniqueId, peerOptions);
+    peer = new Peer(myUniqueId, peerOptionsLocal);
     bindPeerEvents(false);
   }
   function bindPeerEvents(isHost){
@@ -1761,19 +1756,26 @@ function joinP2PChat(roomParam){
         createClient();
       }else if(err.type === 'peer-unavailable'){
         if(!isHost){
-          if(statusEl){ statusEl.textContent=`대기중 - 방에 아무도 없음 (${room}) - 호스트로 대기`; statusEl.style.color="#09865f"; }
-          if(joinBtn){ joinBtn.disabled=false; joinBtn.textContent="대기중"; }
+          const statusEl2=document.getElementById("p2pStatus");
+          const joinBtn2=document.getElementById("joinBtn");
+          if(statusEl2){ statusEl2.textContent=`대기중 - 방 생성됨 (${room})`; statusEl2.style.color="#09865f"; }
+          if(joinBtn2){ joinBtn2.disabled=false; joinBtn2.textContent="대기중(호스트)"; }
           try{ peer.destroy(); }catch(e){}
           createHost();
         }
       }else{
-        if(statusEl){ statusEl.textContent = "연결 오류 (" + err.type + ") - F12 콘솔 확인"; statusEl.style.color = "#d64545"; }
-        if(joinBtn){ joinBtn.disabled = false; joinBtn.textContent = "재연결"; }
+        const statusEl2=document.getElementById("p2pStatus");
+        const joinBtn2=document.getElementById("joinBtn");
+        if(statusEl2){ statusEl2.textContent = "연결 오류 (" + err.type + ") - 새로고침"; statusEl2.style.color = "#d64545"; }
+        if(joinBtn2){ joinBtn2.disabled = false; joinBtn2.textContent = "재연결"; }
       }
     });
   }
-  createHost();
+  // 핵심: 클라이언트로 먼저 시도 (호스트 충돌 방지)
+  createClient();
 }
+
+
 
 function onPeerConnected(room, session){
   const statusEl = document.getElementById("p2pStatus");
@@ -1852,7 +1854,7 @@ function exportChat(){
 }
 
 (function initChat(){
-  setTimeout(()=>{ try{ renderRoomList(); }catch(e){} }, 300);
+  setTimeout(()=>{ try{ renderRoomList(); }catch(e){} }, 200);
 
   const roomInput = document.getElementById("chatRoomCode");
   const lastRoom = localStorage.getItem(getLastRoomKey());
