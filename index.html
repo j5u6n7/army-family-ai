@@ -1583,8 +1583,8 @@ function switchRoom(newRoom){
 
 function joinP2PChat(roomParam){
   const roomInput = document.getElementById("chatRoomCode");
-  const room = (roomParam || roomInput?.value || "").trim();
-  if(!room){ alert("방 코드를 입력하세요."); return; }
+  let room = (roomParam || roomInput?.value || "").trim().toLowerCase().replace(/\s+/g,"");
+  if(!room){ alert("방 코드를 입력하세요. 영문소문자+숫자 권장 (예: family01)"); return; }
   const session = JSON.parse(localStorage.getItem("armySession")||"null");
   if(!session){ alert("로그인이 필요합니다."); return; }
 
@@ -1600,45 +1600,73 @@ function joinP2PChat(roomParam){
 
   const statusEl = document.getElementById("p2pStatus");
   const joinBtn = document.getElementById("joinBtn");
-  if(statusEl){ statusEl.textContent = "연결중..."; statusEl.style.color = "#667085"; }
+  if(statusEl){ statusEl.textContent = "연결중... ("+room+")"; statusEl.style.color = "#667085"; }
   if(joinBtn){ joinBtn.disabled = true; joinBtn.textContent = "연결중..."; }
 
   const safeRoom = (()=>{ let h=0; for(let i=0;i<room.length;i++) h=(h*31+room.charCodeAt(i))>>>0; return h.toString(16).padStart(8,'0'); })();
-  const myUniqueId = `army-v3-${safeRoom}-${Math.random().toString(36).slice(2,5)}`;
+  const myUniqueId = `army-v3-${safeRoom}-${Math.random().toString(36).slice(2,4)}${Date.now().toString(36).slice(-3)}`;
   const hostId = `army-v3-${safeRoom}-host`;
 
   if(peer){ try{ peer.destroy(); }catch(e){} }
   conns = {};
 
-  peer = new Peer(hostId);
+  const peerOptions = {
+    config: { iceServers: [ {urls:"stun:stun.l.google.com:19302"}, {urls:"stun:stun1.l.google.com:19302"} ] },
+    debug: 1
+  };
 
-  peer.on('open', (id)=>{
-    onPeerConnected(room, session);
-  });
-
-  peer.on('error', (err)=>{
-    if(err.type === 'unavailable-id'){
-      // 호스트 있음 -> 클라이언트로
-      peer = new Peer(myUniqueId);
-      peer.on('open', ()=>{
-        onPeerConnected(room, session);
+  function createHost(){
+    console.log("[P2P] host 시도", hostId);
+    peer = new Peer(hostId, peerOptions);
+    bindPeerEvents(true);
+  }
+  function createClient(){
+    console.log("[P2P] client 시도", myUniqueId, "->", hostId);
+    peer = new Peer(myUniqueId, peerOptions);
+    bindPeerEvents(false);
+  }
+  function bindPeerEvents(isHost){
+    peer.on('open', (id)=>{
+      console.log("[P2P] open", id, "isHost", isHost);
+      onPeerConnected(room, session);
+      if(!isHost){
         const conn = peer.connect(hostId, { metadata: { name: session.name || session.username, room: room }, reliable: true });
         setupConn(conn);
-      });
-      peer.on('connection', (conn) => setupConn(conn));
-      peer.on('error', (e2)=>{
-        if(statusEl){ statusEl.textContent = "연결 오류 (" + e2.type + ")"; statusEl.style.color = "#d64545"; }
+        setTimeout(()=>{
+          if(Object.keys(conns).length===0){
+            console.log("[P2P] 호스트 무응답, 호스트로 승격");
+            try{ peer.destroy(); }catch(e){}
+            createHost();
+          }
+        }, 3500);
+      }
+    });
+    peer.on('connection', (conn)=> setupConn(conn));
+    peer.on('disconnected', ()=>{
+      console.log("[P2P] disconnected - 재연결");
+      const st=document.getElementById("p2pStatus");
+      if(st) st.textContent="재연결중...";
+      try{ peer.reconnect(); }catch(e){ setTimeout(()=>{ isHost?createHost():createClient(); },1500); }
+    });
+    peer.on('error', (err)=>{
+      console.error("[P2P] error", err.type, err);
+      if(err.type === 'unavailable-id' && isHost){
+        try{ peer.destroy(); }catch(e){}
+        createClient();
+      }else if(err.type === 'peer-unavailable'){
+        if(!isHost){
+          if(statusEl){ statusEl.textContent=`대기중 - 방에 아무도 없음 (${room}) - 호스트로 대기`; statusEl.style.color="#09865f"; }
+          if(joinBtn){ joinBtn.disabled=false; joinBtn.textContent="대기중"; }
+          try{ peer.destroy(); }catch(e){}
+          createHost();
+        }
+      }else{
+        if(statusEl){ statusEl.textContent = "연결 오류 (" + err.type + ") - F12 콘솔 확인"; statusEl.style.color = "#d64545"; }
         if(joinBtn){ joinBtn.disabled = false; joinBtn.textContent = "재연결"; }
-      });
-    } else {
-      if(statusEl){ statusEl.textContent = "연결 오류 (" + err.type + ")"; statusEl.style.color = "#d64545"; }
-      if(joinBtn){ joinBtn.disabled = false; joinBtn.textContent = "재연결"; }
-    }
-  });
-
-  peer.on('connection', (conn)=>{
-    setupConn(conn);
-  });
+      }
+    });
+  }
+  createHost();
 }
 
 function onPeerConnected(room, session){
@@ -1761,4 +1789,4 @@ function exportChat(){
 </script>
 
 </body>
-</html>
+   </html>
