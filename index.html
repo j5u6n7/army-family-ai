@@ -416,10 +416,10 @@ hr{ border:0; border-top:1px solid #e5e9ee; margin:18px 0 }
  </div>
 </section>
 
-<!-- CHAT -->
+<!-- CHAT - 개선됨: 소통방 생성시 기본방 저장 및 선택 기능 -->
 <section id="chat" class="page">
  <h1>💬 업무 소통방</h1>
- <p class="sub">동일한 방 코드를 입력하면 담당자 간 실시간으로 메시지를 주고받을 수 있습니다.</p>
+ <p class="sub">방을 생성하면 기본방으로 자동 저장되며, 이후 목록에서 선택할 수 있습니다.</p>
  <div class="chat-notify-bar" id="notifyBar">
   <label><div class="switch on" id="notifySwitch" onclick="toggleNotify()"></div> 새 메시지 알림</label>
   <span style="flex:1"></span>
@@ -441,7 +441,29 @@ hr{ border:0; border-top:1px solid #e5e9ee; margin:18px 0 }
    <button onclick="saveTelegramConfig()" style="padding:8px 12px; font-size:11px;">설정 저장</button>
   </div>
   <div style="font-size:10px; color:#586578; margin-top:6px;">
-   * 텔레그램 @BotFather로 받은 토큰과 Chat ID (그룹: -1004436506089)를 입력하면 <b>브라우저가 닫혀 있어도 스마트폰 텔레그램 푸시 알림</b>이 전송됩니다.
+   * 텔레그램 @BotFather로 받은 토큰과 Chat ID를 입력하면 <b>브라우저가 닫혀 있어도 스마트폰 텔레그램 푸시 알림</b>이 전송됩니다.
+  </div>
+ </div>
+
+ <!-- ★ 신규: 소통방 관리 (생성 -> 기본방 저장 -> 선택) -->
+ <div class="box" style="padding:12px; border:1px solid #b9d2f0; background:#f8fbff">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <b style="font-size:13px">🏠 소통방 관리</b>
+    <span id="currentRoomLabel" style="font-size:11px;color:#1d5fae;font-weight:800"></span>
+  </div>
+  <div class="row" style="margin-bottom:8px">
+    <button onclick="createNewRoom()" class="green full">+ 새 방 생성 (기본방 저장)</button>
+    <button onclick="setAsDefaultRoom()" class="secondary full">★ 기본방 지정</button>
+  </div>
+  <div style="display:flex;gap:6px;align-items:center">
+    <select id="roomSelectDropdown" onchange="selectRoom(this.value)" style="margin:0;flex:1">
+      <option>방 목록 로딩중...</option>
+    </select>
+    <button onclick="renderRoomList()" class="gray" style="padding:10px 12px">↻</button>
+  </div>
+  <div id="roomSelectBox" style="margin-top:10px"></div>
+  <div style="font-size:10px;color:#586578;margin-top:8px;line-height:1.4">
+    💡 새 방을 생성하면 자동으로 <b>기본방</b>으로 저장됩니다. 다음 접속 시 기본방이 자동 선택되며, 목록에서 언제든 전환 가능합니다.
   </div>
  </div>
 
@@ -470,6 +492,7 @@ hr{ border:0; border-top:1px solid #e5e9ee; margin:18px 0 }
   <div id="chatUserList" style="font-size:12px;color:#586578">방 코드를 입력하고 연결을 눌러주세요.</div>
  </div>
 </section>
+
 
 <!-- REPORT -->
 <section id="report" class="page">
@@ -522,6 +545,7 @@ hr{ border:0; border-top:1px solid #e5e9ee; margin:18px 0 }
  </div>
 </section>
 </main>
+
 <!-- NAV -->
 <nav class="bottom">
  <div class="nav active" onclick="go('home',this)"><b>🏠</b>홈</div>
@@ -603,7 +627,6 @@ hr{ border:0; border-top:1px solid #e5e9ee; margin:18px 0 }
   <button class="full" onclick="saveTodo()">저장</button>
  </div>
 </div>
-
 <!-- 프로그램 기본 JS -->
 <script>
 "use strict";
@@ -668,6 +691,7 @@ function resetDemo() {
   localStorage.removeItem(DB_KEY);
   location.reload();
 }
+
 function login(){
  const id = document.getElementById("loginId").value.trim();
  const pw = document.getElementById("loginPw").value;
@@ -709,6 +733,7 @@ function addWatermark(){
  wm.textContent = `유가족지원 AI ${session.name}`;
  document.body.appendChild(wm);
 }
+
 function addLog(action, target=""){
  db.logs.push({ time: new Date().toLocaleString("ko-KR"), user: session?.name || "미로그인", action, target });
  saveDB();
@@ -769,7 +794,6 @@ function openCase(){
  if(titleEl) titleEl.textContent = "새 사건 등록";
  openModal("caseModal");
 }
-
 function openEditCase(id){
  const c = db.cases.find(x => x.id === id);
  if(!c) return;
@@ -790,7 +814,6 @@ function saveCase(){
  const name = document.getElementById("fName").value.trim();
  if(!no || !name){ alert("사건번호와 고인을 입력해주세요."); return; }
  const editId = document.getElementById("caseModal").dataset.editId;
-
  if(editId){
   const c = db.cases.find(x => x.id === editId);
   if(!c) return;
@@ -916,7 +939,6 @@ function detail(id){
 </div>`;
  go("detail");
 }
-
 function fillSelects(){
  const options = db.cases.map(c => `<option value="${esc(c.id)}">${esc(c.no)} · ${esc(c.name)}</option>`).join("");
  ["consultCase", "reportCase", "todoCase", "deathCase"].forEach(id => {
@@ -1168,7 +1190,6 @@ function searchAll(){
 </div>`).join("") : "<div class='empty'>검색 결과가 없습니다.</div>";
  addLog("통합검색", q);
 }
-
 function searchCases(){
  const q = document.getElementById("caseSearch").value.trim().toLowerCase();
  if(!q){ document.getElementById("searchResult").innerHTML=""; return; }
@@ -1189,7 +1210,6 @@ function searchCases(){
 </div>`;
  addLog("사례검색", q);
 }
-
 function renderAdmin(){
  const el = document.getElementById("userList");
  if(!session || session.role !== "ADMIN"){ el.innerHTML = "<div class='empty'>관리자만 이용할 수 있습니다.</div>"; return; }
@@ -1525,7 +1545,6 @@ function bumpUnread(){
   }
   if(nav) nav.classList.add('has-notify');
 }
-
 function playNotifySound(){
   if(!notifyEnabled || notifySoundType === 'none') return;
   try{
@@ -1569,6 +1588,7 @@ function showToast(htmlMsg, duration=3500){
   wrap.appendChild(div);
   setTimeout(()=>{ div.style.opacity='0'; div.style.transform='translateY(-8px)'; div.style.transition='.3s'; setTimeout(()=>div.remove(),300); }, duration);
 }
+
 function showChatToast(msg){
   const name = esc(msg.userName||'담당자');
   const text = esc((msg.text||'').slice(0,60));
@@ -1611,6 +1631,159 @@ function addChatMessage(msg, save=true){
  if(save) saveChat();
  renderChat();
 }
+
+
+// =====================================================
+// ★ 개선: 소통방 생성 -> 기본방 저장 -> 선택 기능
+// =====================================================
+const ROOM_PREFIX = "육군-유가족-";
+let roomList = JSON.parse(localStorage.getItem("armyRoomList")||"[]");
+let defaultRoom = localStorage.getItem("armyDefaultRoom") || "";
+
+function generateRoomCode(){
+  const num = Math.floor(1000 + Math.random()*9000);
+  const ts = Date.now().toString(36).slice(-2).toUpperCase();
+  return `${ROOM_PREFIX}${num}-${ts}`;
+}
+function createNewRoom(){
+  const newRoom = generateRoomCode();
+  if(!roomList.includes(newRoom)){
+    roomList.unshift(newRoom);
+    if(roomList.length>30) roomList = roomList.slice(0,30);
+    localStorage.setItem("armyRoomList", JSON.stringify(roomList));
+  }
+  localStorage.setItem("armyDefaultRoom", newRoom);
+  localStorage.setItem("armyCurrentRoom", newRoom);
+  defaultRoom = newRoom;
+  currentRoom = newRoom;
+  const inp = document.getElementById("chatRoomCode");
+  if(inp) inp.value = newRoom;
+  renderRoomList();
+  updateCurrentRoomLabel();
+  showToast(`새 소통방 생성: ${newRoom} (기본방으로 설정)`);
+  return newRoom;
+}
+function renderRoomList(){
+  const box = document.getElementById("roomSelectBox");
+  const sel = document.getElementById("roomSelectDropdown");
+  roomList = JSON.parse(localStorage.getItem("armyRoomList")||"[]");
+  defaultRoom = localStorage.getItem("armyDefaultRoom") || "";
+  const cur = localStorage.getItem("armyCurrentRoom") || currentRoom || defaultRoom || "";
+  if(sel){
+    if(roomList.length===0){
+      sel.innerHTML = `<option value="">생성된 방 없음</option>`;
+    } else {
+      sel.innerHTML = roomList.map(r=>`<option value="${r}" ${r===cur?'selected':''}>${r}${r===defaultRoom?' ★기본':''}</option>`).join('');
+    }
+  }
+  if(!box) return;
+  if(roomList.length===0){
+    box.innerHTML = `<div style="font-size:11px;color:#888;padding:6px">생성된 방이 없습니다. [+ 새 방 생성]을 눌러주세요.</div>`;
+    return;
+  }
+  let html = `<div style="display:flex;flex-wrap:wrap;gap:6px">`;
+  roomList.forEach(room=>{
+    const isDefault = room===defaultRoom;
+    const isCurrent = room===cur;
+    html+=`<div onclick="selectRoom('${room}')" style="cursor:pointer;padding:6px 10px;border-radius:20px;font-size:11px;border:1px solid ${isCurrent?'#1d5fae':'#d9e1e9'};background:${isCurrent?'#e8f1ff':'#fff'};font-weight:${isDefault?'900':'600'};color:${isCurrent?'#1d5fae':'#333'}">${isDefault?'★ ':''}${room}${isCurrent?' (현재)':''} <span onclick="event.stopPropagation();deleteRoom('${room}')" style="margin-left:4px;color:#c53c3c">✕</span></div>`;
+  });
+  html+=`</div>`;
+  box.innerHTML = html;
+}
+function selectRoom(room){
+  if(!room) return;
+  currentRoom = room;
+  localStorage.setItem("armyCurrentRoom", room);
+  const inp = document.getElementById("chatRoomCode");
+  if(inp) inp.value = room;
+  renderRoomList();
+  updateCurrentRoomLabel();
+  showToast(`${room} 으로 전환됨 - 연결을 눌러 입장하세요`);
+}
+function setAsDefaultRoom(room){
+  const target = room || currentRoom || document.getElementById("chatRoomCode")?.value.trim();
+  if(!target){ alert("방을 먼저 선택/입력하세요"); return; }
+  localStorage.setItem("armyDefaultRoom", target);
+  defaultRoom = target;
+  if(!roomList.includes(target)){
+    roomList.unshift(target);
+    localStorage.setItem("armyRoomList", JSON.stringify(roomList));
+  }
+  renderRoomList();
+  updateCurrentRoomLabel();
+  showToast(`${target} 을 기본방으로 설정`);
+}
+function deleteRoom(room){
+  if(!confirm(`${room} 을 목록에서 삭제할까요? (채팅기록은 유지)`)) return;
+  roomList = roomList.filter(r=>r!==room);
+  localStorage.setItem("armyRoomList", JSON.stringify(roomList));
+  if(defaultRoom===room){
+    const newDef = roomList[0]||"";
+    if(newDef) localStorage.setItem("armyDefaultRoom", newDef);
+    else localStorage.removeItem("armyDefaultRoom");
+    defaultRoom = newDef;
+  }
+  if((localStorage.getItem("armyCurrentRoom")||"")===room){
+    localStorage.removeItem("armyCurrentRoom");
+  }
+  renderRoomList();
+  updateCurrentRoomLabel();
+}
+function updateCurrentRoomLabel(){
+  const el = document.getElementById("currentRoomLabel");
+  if(el){
+    const cur = localStorage.getItem("armyCurrentRoom") || currentRoom || defaultRoom || "";
+    el.textContent = cur ? `현재: ${cur} ${cur===defaultRoom?'★기본':''}` : '';
+  }
+}
+function initRoomSystem(){
+  roomList = JSON.parse(localStorage.getItem("armyRoomList")||"[]");
+  defaultRoom = localStorage.getItem("armyDefaultRoom") || "";
+  const savedCurrent = localStorage.getItem("armyCurrentRoom") || "";
+  const initialRoom = savedCurrent || defaultRoom || (roomList[0] || "육군-유가족-1");
+  if(!currentRoom) currentRoom = initialRoom;
+  const inp = document.getElementById("chatRoomCode");
+  if(inp && !inp.value) inp.value = initialRoom;
+  if(!localStorage.getItem("armyCurrentRoom") && initialRoom){
+    localStorage.setItem("armyCurrentRoom", initialRoom);
+  }
+  renderRoomList();
+  updateCurrentRoomLabel();
+  console.log("[RoomSystem] init", initialRoom, "default", defaultRoom, "list", roomList.length);
+}
+// 기존 함수 패치: join시 리스트 저장
+const _origJoinP2PChat = joinP2PChat;
+joinP2PChat = function(){
+  const roomInput = document.getElementById("chatRoomCode");
+  const room = (roomInput?.value||"").trim();
+  if(!room) { alert("방 코드를 입력하세요."); return; }
+  // 리스트 저장 로직 추가
+  roomList = JSON.parse(localStorage.getItem("armyRoomList")||"[]");
+  if(!roomList.includes(room)){
+    roomList.unshift(room);
+    if(roomList.length>30) roomList = roomList.slice(0,30);
+    localStorage.setItem("armyRoomList", JSON.stringify(roomList));
+  }
+  localStorage.setItem("armyCurrentRoom", room);
+  if(!localStorage.getItem("armyDefaultRoom")){
+    localStorage.setItem("armyDefaultRoom", room);
+    defaultRoom = room;
+  }
+  renderRoomList();
+  updateCurrentRoomLabel();
+  return _origJoinP2PChat();
+};
+// sendChat에서 currentRoom fallback 개선
+const _origSendChat = sendChat;
+sendChat = function(){
+  if(!currentRoom){
+    currentRoom = localStorage.getItem("armyCurrentRoom") || localStorage.getItem("armyDefaultRoom") || document.getElementById("chatRoomCode")?.value.trim() || "육군-유가족-1";
+  }
+  return _origSendChat();
+};
+// initChat에 room system 연결
+setTimeout(()=>{ try{ initRoomSystem(); }catch(e){ console.log(e); } }, 400);
+setInterval(updateCurrentRoomLabel, 1000);
 
 function sendChat(){
  const input = document.getElementById("chatInput");
@@ -1778,6 +1951,7 @@ function exportChat(){
  const blob = new Blob([txt], {type:"text/plain"}); const url = URL.createObjectURL(blob);
  const a=document.createElement("a"); a.href=url; a.download=`army-chat-${new Date().toISOString().slice(0,10)}.txt`; a.click(); URL.revokeObjectURL(url);
 }
+
 (function initChat(){
  loadChat();
  const origGo = window.go;
@@ -1798,4 +1972,4 @@ function exportChat(){
 </script>
 
 </body>
-                       </html>
+   </html>
