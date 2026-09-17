@@ -416,10 +416,10 @@ hr{ border:0; border-top:1px solid #e5e9ee; margin:18px 0 }
  </div>
 </section>
 
-<!-- CHAT - 개선됨: 소통방 생성시 기본방 저장 및 선택 기능 -->
+<!-- CHAT - 소통방 개선 -->
 <section id="chat" class="page">
  <h1>💬 업무 소통방</h1>
- <p class="sub">방을 생성하면 기본방으로 자동 저장되며, 이후 목록에서 선택할 수 있습니다.</p>
+ <p class="sub">방을 생성하거나 변경하면 해당 방의 대화 내용만 독립적으로 관리됩니다.</p>
  <div class="chat-notify-bar" id="notifyBar">
   <label><div class="switch on" id="notifySwitch" onclick="toggleNotify()"></div> 새 메시지 알림</label>
   <span style="flex:1"></span>
@@ -445,7 +445,7 @@ hr{ border:0; border-top:1px solid #e5e9ee; margin:18px 0 }
   </div>
  </div>
 
- <!-- ★ 신규: 소통방 관리 (생성 -> 기본방 저장 -> 선택) -->
+ <!-- 소통방 관리 -->
  <div class="box" style="padding:12px; border:1px solid #b9d2f0; background:#f8fbff">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
     <b style="font-size:13px">🏠 소통방 관리</b>
@@ -462,15 +462,12 @@ hr{ border:0; border-top:1px solid #e5e9ee; margin:18px 0 }
     <button onclick="renderRoomList()" class="gray" style="padding:10px 12px">↻</button>
   </div>
   <div id="roomSelectBox" style="margin-top:10px"></div>
-  <div style="font-size:10px;color:#586578;margin-top:8px;line-height:1.4">
-    💡 새 방을 생성하면 자동으로 <b>기본방</b>으로 저장됩니다. 다음 접속 시 기본방이 자동 선택되며, 목록에서 언제든 전환 가능합니다.
-  </div>
  </div>
 
  <div class="box" style="padding:12px">
   <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-   <label style="margin:0">방 코드</label>
-   <input id="chatRoomCode" placeholder="예: 1중대-유가족팀" style="margin:0;flex:1;min-width:140px" value="육군-유가족-1">
+   <label style="margin:0">현재 방 코드</label>
+   <input id="chatRoomCode" placeholder="예: 1중대-유가족팀" style="margin:0;flex:1;min-width:140px" value="육군-유가족-1" onchange="selectRoom(this.value.trim())">
    <button onclick="joinP2PChat()" id="joinBtn" class="green" style="padding:10px 14px">연결</button>
    <span id="p2pStatus" style="font-size:11px;color:#667085">연결 안됨</span>
   </div>
@@ -484,7 +481,7 @@ hr{ border:0; border-top:1px solid #e5e9ee; margin:18px 0 }
   </div>
  </div>
  <div class="row" style="margin-top:10px">
-  <button class="secondary" onclick="clearChat()">대화기록 삭제</button>
+  <button class="secondary" onclick="clearCurrentRoomChat()">현재 방 대화 삭제</button>
   <button class="secondary" onclick="exportChat()">내보내기</button>
  </div>
  <div id="chatUsers" class="box" style="margin-top:12px">
@@ -627,6 +624,7 @@ hr{ border:0; border-top:1px solid #e5e9ee; margin:18px 0 }
   <button class="full" onclick="saveTodo()">저장</button>
  </div>
 </div>
+
 <!-- 프로그램 기본 JS -->
 <script>
 "use strict";
@@ -794,6 +792,7 @@ function openCase(){
  if(titleEl) titleEl.textContent = "새 사건 등록";
  openModal("caseModal");
 }
+
 function openEditCase(id){
  const c = db.cases.find(x => x.id === id);
  if(!c) return;
@@ -814,6 +813,7 @@ function saveCase(){
  const name = document.getElementById("fName").value.trim();
  if(!no || !name){ alert("사건번호와 고인을 입력해주세요."); return; }
  const editId = document.getElementById("caseModal").dataset.editId;
+
  if(editId){
   const c = db.cases.find(x => x.id === editId);
   if(!c) return;
@@ -939,6 +939,7 @@ function detail(id){
 </div>`;
  go("detail");
 }
+
 function fillSelects(){
  const options = db.cases.map(c => `<option value="${esc(c.id)}">${esc(c.no)} · ${esc(c.name)}</option>`).join("");
  ["consultCase", "reportCase", "todoCase", "deathCase"].forEach(id => {
@@ -1190,6 +1191,7 @@ function searchAll(){
 </div>`).join("") : "<div class='empty'>검색 결과가 없습니다.</div>";
  addLog("통합검색", q);
 }
+
 function searchCases(){
  const q = document.getElementById("caseSearch").value.trim().toLowerCase();
  if(!q){ document.getElementById("searchResult").innerHTML=""; return; }
@@ -1210,6 +1212,7 @@ function searchCases(){
 </div>`;
  addLog("사례검색", q);
 }
+
 function renderAdmin(){
  const el = document.getElementById("userList");
  if(!session || session.role !== "ADMIN"){ el.innerHTML = "<div class='empty'>관리자만 이용할 수 있습니다.</div>"; return; }
@@ -1376,527 +1379,578 @@ window.transcribeSelectedAudio = async function(){
 function escapeHtml(value){ return String(value ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;"); }
 </script>
 
-<!-- P2P 소통방 및 텔레그램 알림 JS -->
+<!-- P2P 소통방 및 텔레그램 알림 JS (수정/개선 완료) -->
 <script>
 let chatMessages = [];
 let peer = null;
 let conns = {};
+let currentRoom = localStorage.getItem("armyCurrentRoom") || localStorage.getItem("armyDefaultRoom") || "육군-유가족-1";
 
-/* =================== 개선된 소통방 v4 - 방별 분리 + 실시간 안정화 =================== */
-let currentRoom = null;
-let chatMessages = []; // 현재 방 메시지만 메모리 보관
-let conns = {};
-let peer = null;
-let unreadCount = 0;
-
-function getChatStorageKey(room){
-  return `armyChat_${(room||currentRoom||'default').trim()}`;
-}
-function getLastRoomKey(){ return "armyLastRoom"; }
-
-function loadChat(room){
-  const targetRoom = (room||currentRoom||"").trim();
-  if(!targetRoom){ chatMessages=[]; return; }
-  try{
-    const raw = localStorage.getItem(getChatStorageKey(targetRoom));
-    chatMessages = raw ? JSON.parse(raw) : [];
-  }catch(e){ chatMessages=[]; }
+function loadChat(){
+ try{
+  const raw = localStorage.getItem("armyChat");
+  chatMessages = raw ? JSON.parse(raw) : [];
+ }catch(e){ chatMessages=[]; }
 }
 
 function saveChat(){
-  if(!currentRoom) return;
+ localStorage.setItem("armyChat", JSON.stringify(chatMessages.slice(-1000)));
+}
+
+/* ★ 현재 방의 대화 메시지만 필터링하여 표시하는 기능 */
+function renderChat(){
+ const list = document.getElementById("chatList");
+ if(!list) return;
+ const session = JSON.parse(localStorage.getItem("armySession")||"null");
+ const myId = session?.id || session?.username || "me";
+ 
+ const curRoom = currentRoom || localStorage.getItem("armyCurrentRoom") || "육군-유가족-1";
+ const roomMessages = chatMessages.filter(m => (m.room || "육군-유가족-1") === curRoom);
+ 
+ if(!roomMessages.length){
+  list.innerHTML = `<div style="text-align:center;color:#8a96a6;font-size:12px;padding:40px 0">[${esc(curRoom)}]<br>방의 대화가 없습니다.<br>연결 버튼을 눌러 소통을 시작하세요.</div>`;
+ } else {
+  list.innerHTML = "";
+  roomMessages.forEach(m=>{
+   const isMe = m.userId === myId;
+   const time = new Date(m.ts).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+   const div = document.createElement("div");
+   div.style.cssText = `max-width:78%;align-self:${isMe?'flex-end':'flex-start'};display:flex;flex-direction:column;gap:3px`;
+   div.innerHTML = `
+    <div style="font-size:10px;color:#8a96a6;${isMe?'text-align:right':''}">${esc(m.userName)} · ${time}</div>
+    <div style="background:${isMe?'#1d5fae':'#fff'};color:${isMe?'#fff':'#172033'};padding:10px 13px;border-radius:${isMe?'14px 14px 2px 14px':'14px 14px 14px 2px'};font-size:13px;line-height:1.5;word-break:break-word;box-shadow:0 1px 4px #0001;border:${isMe?'0':'1px solid #e2e7ed'}">${esc(m.text).replace(/\n/g,'<br>')}</div>
+   `;
+   list.appendChild(div);
+  });
+  list.scrollTop = list.scrollHeight;
+ }
+ const peerCountEl = document.getElementById("peerCount");
+ if(peerCountEl) peerCountEl.textContent = Object.keys(conns).length + 1;
+}
+
+/* ========= 알림 및 텔레그램 연동 기능 ========= */
+let notifyEnabled = (localStorage.getItem('armyNotifyEnabled') !== 'false');
+let notifySoundType = localStorage.getItem('armyNotifySound') || 'beep';
+let unreadCount = 0;
+let audioCtx = null;
+
+function ensureAudioContext() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+document.addEventListener('click', ensureAudioContext, { once: true });
+document.addEventListener('keydown', ensureAudioContext, { once: true });
+
+function loadTelegramConfig() {
+  const token = localStorage.getItem("armyTgToken") || "";
+  const chatId = localStorage.getItem("armyTgChatId") || "";
+  const tokenEl = document.getElementById("tgBotToken");
+  const chatEl = document.getElementById("tgChatId");
+  if (tokenEl) tokenEl.value = token;
+  if (chatEl) chatEl.value = chatId;
+}
+
+function saveTelegramConfig() {
+  const token = document.getElementById("tgBotToken").value.trim();
+  const chatId = document.getElementById("tgChatId").value.trim();
+  localStorage.setItem("armyTgToken", token);
+  localStorage.setItem("armyTgChatId", chatId);
+  showToast("✅ 텔레그램 알림 정보가 저장되었습니다.");
+}
+
+function sendTelegramNotification(userName, text, roomName) {
+  const token = (localStorage.getItem("armyTgToken") || localStorage.getItem("telegramBotToken") || document.getElementById("tgBotToken")?.value || "").trim();
+  const chatId = (localStorage.getItem("armyTgChatId") || localStorage.getItem("telegramChatId") || document.getElementById("tgChatId")?.value || "").trim();
+  if (!token || !chatId) return;
+
+  const now = new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
+  const message = `🔔 [유가족지원 AI] 새 메시지 알림\n방: ${roomName||currentRoom||'소통방'}\n보낸이: ${userName}\n시간: ${now}\n\n새 메시지가 등록되었습니다.\n내용은 소통방에서 확인하세요.`;
+
+  const postUrl = `https://api.telegram.org/bot${token}/sendMessage`;
+  fetch(postUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, text: message })
+  }).then(r=>r.json()).then(d=>{
+    if(!d.ok){
+      const getUrl = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${encodeURIComponent(chatId)}&text=${encodeURIComponent(message)}`;
+      return fetch(getUrl).then(r=>r.json());
+    }
+  }).catch(err => {
+    try{
+      const getUrl = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${encodeURIComponent(chatId)}&text=${encodeURIComponent(message)}`;
+      fetch(getUrl).catch(()=>{});
+    }catch(e){}
+  });
+}
+
+function initNotify(){
+  const sw = document.getElementById('notifySwitch');
+  if(sw){ if(notifyEnabled) sw.classList.add('on'); else sw.classList.remove('on'); }
+  const sel = document.getElementById('notifySoundSel');
+  if(sel) sel.value = notifySoundType;
+  loadTelegramConfig();
+}
+
+function toggleNotify(){
+  notifyEnabled = !notifyEnabled;
+  localStorage.setItem('armyNotifyEnabled', notifyEnabled);
+  const sw = document.getElementById('notifySwitch');
+  if(sw) sw.classList.toggle('on', notifyEnabled);
+  if(notifyEnabled){
+    ensureAudioContext();
+    showToast('🔔 알림이 켜졌습니다.');
+  } else {
+    showToast('🔕 알림이 꺼졌습니다.');
+  }
+}
+
+function changeNotifySound(v){
+  notifySoundType = v;
+  localStorage.setItem('armyNotifySound', v);
+  playNotifySound();
+}
+
+function isChatPageVisible(){
+  const page = document.getElementById('chat');
+  return page && page.classList.contains('active');
+}
+
+function clearUnread(){
+  unreadCount = 0;
+  const badge = document.getElementById('chatBadge');
+  const nav = document.getElementById('navChat');
+  if(badge){ badge.textContent = '0'; badge.style.display='none'; }
+  if(nav) nav.classList.remove('has-notify');
+}
+
+function bumpUnread(){
+  if(isChatPageVisible() && !document.hidden) return;
+  unreadCount++;
+  const badge = document.getElementById('chatBadge');
+  const nav = document.getElementById('navChat');
+  if(badge){
+    badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+    badge.style.display = 'grid';
+  }
+  if(nav) nav.classList.add('has-notify');
+}
+
+function playNotifySound(){
+  if(!notifyEnabled || notifySoundType === 'none') return;
   try{
-    localStorage.setItem(getChatStorageKey(currentRoom), JSON.stringify(chatMessages.slice(-500)));
-    localStorage.setItem(getLastRoomKey(), currentRoom);
+    ensureAudioContext();
+    const ctx = audioCtx;
+    if(!ctx) return;
+    const now = ctx.currentTime;
+    if(notifySoundType === 'beep'){
+      const osc = ctx.createOscillator(); const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.setValueAtTime(880, now);
+      osc.frequency.setValueAtTime(1320, now+0.12);
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now+0.35);
+      osc.start(now); osc.stop(now+0.35);
+    } else if(notifySoundType === 'chime'){
+      [523.25,659.25,783.99].forEach((freq,i)=>{
+        const o = ctx.createOscillator(); const g = ctx.createGain();
+        o.type='sine'; o.frequency.value=freq; o.connect(g); g.connect(ctx.destination);
+        g.gain.setValueAtTime(0.25, now+i*0.1); g.gain.exponentialRampToValueAtTime(0.01, now+i*0.1+0.6);
+        o.start(now+i*0.1); o.stop(now+i*0.1+0.6);
+      });
+    } else if(notifySoundType === 'ding'){
+      const osc = ctx.createOscillator(); const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.setValueAtTime(1200, now);
+      gain.gain.setValueAtTime(0.35, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now+0.5);
+      osc.start(now); osc.stop(now+0.5);
+    }
   }catch(e){}
 }
 
-function esc(s){ const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
-
-function renderChat(){
-  const listEl = document.getElementById("chatList");
-  const countEl = document.getElementById("msgCount");
-  if(!listEl) return;
-  
-  if(!currentRoom){
-    listEl.innerHTML = `<div class="empty">방 코드를 입력하고 <b>참여하기</b>를 눌러주세요.<br>예) 육군-유가족-1, 1소대-소통방 등<br>방별로 대화가 완전히 분리되어 저장됩니다.</div>`;
-    if(countEl) countEl.textContent = "0개";
-    return;
-  }
-
-  const filtered = chatMessages
-    .filter(m => !m.room || m.room === currentRoom)
-    .sort((a,b)=>a.ts-b.ts);
-  
-  if(countEl) countEl.textContent = `${filtered.length}개 | 현재방: ${currentRoom}`;
-
-  if(filtered.length===0){
-    listEl.innerHTML = `<div class="empty">[${esc(currentRoom)}] 방의 첫 대화를 시작해보세요!<br>이 방의 대화만 표시됩니다.</div>`;
-    return;
-  }
-
-  const session = JSON.parse(localStorage.getItem("armySession")||"null");
-  const myId = session?.id || session?.username;
-
-  listEl.innerHTML = filtered.map(m=>{
-    const isMe = m.userId === myId;
-    const time = new Date(m.ts).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
-    return `<div style="display:flex;${isMe?'justify-content:flex-end':''};margin:8px 0">
-      <div style="max-width:75%;background:${isMe?'#1d5fae':'#fff'};color:${isMe?'#fff':'#172033'};padding:10px 12px;border-radius:${isMe?'14px 14px 2px 14px':'14px 14px 14px 2px'};box-shadow:0 2px 6px #0001;border:1px solid ${isMe?'#1d5fae':'#e8eef4'}">
-        <div style="font-size:11px;opacity:.7;margin-bottom:3px">${esc(m.userName)} · ${time}</div>
-        <div style="font-size:13px;line-height:1.5;white-space:pre-wrap;word-break:break-word">${esc(m.text)}</div>
-      </div>
-    </div>`;
-  }).join('');
-  listEl.scrollTop = listEl.scrollHeight;
+function showToast(htmlMsg, duration=3500){
+  const wrap = document.getElementById('toastWrap');
+  if(!wrap) return;
+  const div = document.createElement('div');
+  div.className = 'toast';
+  div.innerHTML = htmlMsg;
+  div.onclick = ()=>{ div.remove(); if(window.go) go('chat', document.getElementById('navChat')); };
+  wrap.appendChild(div);
+  setTimeout(()=>{ div.style.opacity='0'; div.style.transform='translateY(-8px)'; div.style.transition='.3s'; setTimeout(()=>div.remove(),300); }, duration);
 }
 
-function addChatMessage(msg, isMine){
-  if(!msg || !msg.id) return;
-  if(msg.room && currentRoom && msg.room !== currentRoom){
-    // 다른 방 메시지 -> 해당 방 저장소에 저장만
-    try{
-      const otherKey = getChatStorageKey(msg.room);
-      const otherRaw = localStorage.getItem(otherKey);
-      const otherArr = otherRaw ? JSON.parse(otherRaw) : [];
-      if(!otherArr.find(x=>x.id===msg.id)){
-        otherArr.push(msg);
-        localStorage.setItem(otherKey, JSON.stringify(otherArr.slice(-500)));
-      }
-    }catch(e){}
-    return;
-  }
-  if(chatMessages.find(x=>x.id===msg.id)) return;
-  chatMessages.push(msg);
-  chatMessages.sort((a,b)=>a.ts-b.ts);
-  saveChat();
-  renderChat();
-  if(!isMine) triggerNewMessageAlarm(msg);
+function showChatToast(msg){
+  const name = esc(msg.userName||'담당자');
+  const text = esc((msg.text||'').slice(0,60));
+  showToast(`<div><b>${name}</b><div style="margin-top:2px;opacity:.9">${text}</div></div>`, 4000);
 }
-
-function clearUnread(){ unreadCount=0; const badge=document.getElementById("unreadBadge"); if(badge) badge.style.display='none'; }
 
 function triggerNewMessageAlarm(msg){
-  if(document.getElementById("chat")?.classList.contains("active")) return;
-  unreadCount++;
-  const badge=document.getElementById("unreadBadge");
-  if(badge){ badge.textContent = unreadCount>99?'99+':unreadCount; badge.style.display='block'; }
-}
-function sendChat(){
-  const input = document.getElementById("chatInput");
-  const roomInput = document.getElementById("chatRoomCode");
-  if(!input) return;
-  const text = input.value.trim();
-  if(!text) return;
-  const session = JSON.parse(localStorage.getItem("armySession")||"null");
-  if(!session){ alert("로그인이 필요합니다."); return; }
+  if(!notifyEnabled) return;
+  const session = JSON.parse(localStorage.getItem('armySession')||'null');
+  const isMine = session && (msg.userId === (session.id||session.username));
+  if(isMine) return;
 
-  const roomFromInput = (roomInput?.value||"").trim();
-  if(!roomFromInput){ alert("방 코드를 입력하세요."); return; }
-
-  if(currentRoom !== roomFromInput){
-    // 방이 바뀌었으면 먼저 방 이동 처리 (기존 연결 정리 + 새 방 로드)
-    switchRoom(roomFromInput);
-  }
-
-  const msg = {
-    id: Date.now() + "-" + Math.random().toString(36).slice(2,7),
-    userId: session.id || session.username,
-    userName: session.name || session.username,
-    text: text,
-    ts: Date.now(),
-    room: currentRoom
-  };
-
-  addChatMessage(msg, true);
-
-  let sentCount = 0;
-  Object.values(conns).forEach(c=>{
-    try{ if(c.open){ c.send({type:'chat', data: msg, room: currentRoom}); sentCount++; } }catch(e){}
-  });
+  const visible = isChatPageVisible() && !document.hidden;
+  playNotifySound();
   
-  if(typeof sendTelegramNotification==='function'){
-    sendTelegramNotification(msg.userName, msg.text, msg.room);
+  if(!visible){
+    bumpUnread();
+    showChatToast(msg);
+  } else {
+    showChatToast(msg);
   }
 
-  input.value = "";
-  input.focus();
-  if(typeof addLog==='function') addLog(`[${currentRoom}] 채팅 전송: ${text.slice(0,30)} (P2P:${sentCount})`);
-  showToast(sentCount>0 ? `[${currentRoom}] 실시간 전송됨 (${sentCount}명)` : `[${currentRoom}] 저장됨 - 상대방 접속시 자동 수신`);
+  sendTelegramNotification(msg.userName || '담당자', msg.text || '', msg.room || currentRoom || '소통방');
+}
+
+function testNotify(){
+  const roomInput = document.getElementById("chatRoomCode");
+  const room = currentRoom || (roomInput?.value||"").trim() || '테스트방';
+  const demo = { userName:'테스트', text:'테스트 메시지입니다.', userId:'test', room: room };
+  playNotifySound();
+  showChatToast(demo);
+  sendTelegramNotification(demo.userName, demo.text, demo.room);
+  showToast("테스트 텔레그램 전송 시도중...");
+}
+
+function addChatMessage(msg, save=true){
+ chatMessages.push(msg);
+ if(save) saveChat();
+ renderChat();
+}
+
+// =====================================================
+// ★ 소통방 관리 및 분리 시스템
+// =====================================================
+const ROOM_PREFIX = "육군-유가족-";
+let roomList = JSON.parse(localStorage.getItem("armyRoomList")||"[]");
+let defaultRoom = localStorage.getItem("armyDefaultRoom") || "";
+
+function generateRoomCode(){
+  const num = Math.floor(1000 + Math.random()*9000);
+  const ts = Date.now().toString(36).slice(-2).toUpperCase();
+  return `${ROOM_PREFIX}${num}-${ts}`;
+}
+
+function createNewRoom(){
+  const newRoom = generateRoomCode();
+  if(!roomList.includes(newRoom)){
+    roomList.unshift(newRoom);
+    if(roomList.length>30) roomList = roomList.slice(0,30);
+    localStorage.setItem("armyRoomList", JSON.stringify(roomList));
+  }
+  localStorage.setItem("armyDefaultRoom", newRoom);
+  localStorage.setItem("armyCurrentRoom", newRoom);
+  defaultRoom = newRoom;
+  currentRoom = newRoom;
+  
+  const inp = document.getElementById("chatRoomCode");
+  if(inp) inp.value = newRoom;
+  
+  renderRoomList();
+  updateCurrentRoomLabel();
+  showToast(`새 소통방 생성: ${newRoom}`);
+  joinP2PChat();
+  return newRoom;
+}
+
+function renderRoomList(){
+  const box = document.getElementById("roomSelectBox");
+  const sel = document.getElementById("roomSelectDropdown");
+  roomList = JSON.parse(localStorage.getItem("armyRoomList")||"[]");
+  defaultRoom = localStorage.getItem("armyDefaultRoom") || "";
+  const cur = localStorage.getItem("armyCurrentRoom") || currentRoom || defaultRoom || "";
+  
+  if(sel){
+    if(roomList.length===0){
+      sel.innerHTML = `<option value="">생성된 방 없음</option>`;
+    } else {
+      sel.innerHTML = roomList.map(r=>`<option value="${r}" ${r===cur?'selected':''}>${r}${r===defaultRoom?' ★기본':''}</option>`).join('');
+    }
+  }
+  if(!box) return;
+  if(roomList.length===0){
+    box.innerHTML = `<div style="font-size:11px;color:#888;padding:6px">생성된 방이 없습니다. [+ 새 방 생성]을 눌러주세요.</div>`;
+    return;
+  }
+  let html = `<div style="display:flex;flex-wrap:wrap;gap:6px">`;
+  roomList.forEach(room=>{
+    const isDefault = room===defaultRoom;
+    const isCurrent = room===cur;
+    html+=`<div onclick="selectRoom('${room}')" style="cursor:pointer;padding:6px 10px;border-radius:20px;font-size:11px;border:1px solid ${isCurrent?'#1d5fae':'#d9e1e9'};background:${isCurrent?'#e8f1ff':'#fff'};font-weight:${isDefault?'900':'600'};color:${isCurrent?'#1d5fae':'#333'}">${isDefault?'★ ':''}${room}${isCurrent?' (현재)':''} <span onclick="event.stopPropagation();deleteRoom('${room}')" style="margin-left:4px;color:#c53c3c">✕</span></div>`;
+  });
+  html+=`</div>`;
+  box.innerHTML = html;
+}
+
+/* 방 변경 시 자동 렌더링 및 P2P 재연결 */
+function selectRoom(room){
+  if(!room) return;
+  currentRoom = room;
+  localStorage.setItem("armyCurrentRoom", room);
+  const inp = document.getElementById("chatRoomCode");
+  if(inp) inp.value = room;
+  renderRoomList();
+  updateCurrentRoomLabel();
+  renderChat();
+  joinP2PChat();
+  showToast(`[${room}] 방으로 전환되었습니다.`);
+}
+
+function setAsDefaultRoom(room){
+  const target = room || currentRoom || document.getElementById("chatRoomCode")?.value.trim();
+  if(!target){ alert("방을 먼저 선택/입력하세요"); return; }
+  localStorage.setItem("armyDefaultRoom", target);
+  defaultRoom = target;
+  if(!roomList.includes(target)){
+    roomList.unshift(target);
+    localStorage.setItem("armyRoomList", JSON.stringify(roomList));
+  }
+  renderRoomList();
+  updateCurrentRoomLabel();
+  showToast(`${target} 을 기본방으로 설정`);
+}
+
+function deleteRoom(room){
+  if(!confirm(`${room} 을 목록에서 삭제할까요?`)) return;
+  roomList = roomList.filter(r=>r!==room);
+  localStorage.setItem("armyRoomList", JSON.stringify(roomList));
+  if(defaultRoom===room){
+    const newDef = roomList[0]||"";
+    if(newDef) localStorage.setItem("armyDefaultRoom", newDef);
+    else localStorage.removeItem("armyDefaultRoom");
+    defaultRoom = newDef;
+  }
+  if((localStorage.getItem("armyCurrentRoom")||"")===room){
+    localStorage.removeItem("armyCurrentRoom");
+  }
+  renderRoomList();
+  updateCurrentRoomLabel();
+  renderChat();
+}
+
+function updateCurrentRoomLabel(){
+  const el = document.getElementById("currentRoomLabel");
+  if(el){
+    const cur = localStorage.getItem("armyCurrentRoom") || currentRoom || defaultRoom || "";
+    el.textContent = cur ? `현재: ${cur} ${cur===defaultRoom?'★기본':''}` : '';
+  }
+}
+
+function initRoomSystem(){
+  roomList = JSON.parse(localStorage.getItem("armyRoomList")||"[]");
+  defaultRoom = localStorage.getItem("armyDefaultRoom") || "";
+  const savedCurrent = localStorage.getItem("armyCurrentRoom") || "";
+  const initialRoom = savedCurrent || defaultRoom || (roomList[0] || "육군-유가족-1");
+  currentRoom = initialRoom;
+  const inp = document.getElementById("chatRoomCode");
+  if(inp) inp.value = initialRoom;
+  if(!localStorage.getItem("armyCurrentRoom") && initialRoom){
+    localStorage.setItem("armyCurrentRoom", initialRoom);
+  }
+  renderRoomList();
+  updateCurrentRoomLabel();
+}
+
+/* 메시지 전송 로직 개선 */
+function sendChat(){
+ const input = document.getElementById("chatInput");
+ if(!input) return;
+ const text = input.value.trim();
+ if(!text) return;
+ const session = JSON.parse(localStorage.getItem("armySession")||"null");
+ if(!session){ alert("로그인이 필요합니다."); return; }
+
+ const roomInput = document.getElementById("chatRoomCode");
+ const roomFromInput = (roomInput?.value||"").trim();
+ currentRoom = roomFromInput || currentRoom || "육군-유가족-1";
+ localStorage.setItem("armyCurrentRoom", currentRoom);
+
+ const msg = {
+  id: Date.now() + Math.random().toString(36).slice(2),
+  userId: session.id || session.username,
+  userName: session.name || session.username,
+  text: text,
+  ts: Date.now(),
+  room: currentRoom
+ };
+
+ addChatMessage(msg, true);
+ 
+ const connCount = Object.keys(conns).length;
+ if(connCount > 0){
+   Object.values(conns).forEach(c=>{
+    try{ c.send({type:'chat', data: msg}); }catch(e){}
+   });
+ }
+ 
+ sendTelegramNotification(msg.userName, msg.text, msg.room);
+ input.value = "";
+ if(typeof addLog === 'function') addLog(`채팅 전송: ${text.slice(0,30)} (${currentRoom})`);
 }
 
 function handleIncomingChat(msg){
-  if(!msg || !msg.room) return;
-  if(currentRoom && msg.room !== currentRoom){
-    // 다른 방이면 저장만
-    addChatMessage(msg, false);
-    return;
-  }
-  if(!chatMessages.find(x=>x.id===msg.id)){
-    chatMessages.push(msg);
-    chatMessages.sort((a,b)=>a.ts-b.ts);
-    saveChat();
-    renderChat();
-    triggerNewMessageAlarm(msg);
-  }
+ if(!chatMessages.find(x => x.id === msg.id)){
+  chatMessages.push(msg);
+  saveChat();
+  renderChat();
+  triggerNewMessageAlarm(msg);
+ }
 }
 
 function updatePeerList(){
-  const el = document.getElementById("chatUserList");
-  const statusEl = document.getElementById("p2pStatus");
-  const peerCountEl = document.getElementById("peerCount");
-  if(!el) return;
-  if(!peer){
-    el.innerHTML = `<div style="color:#8793a3">연결 안됨 - 참여하기를 눌러주세요</div>`;
-    if(statusEl) statusEl.textContent = "연결 안됨";
-    return;
+ const el = document.getElementById("chatUserList");
+ if(!el) return;
+ const ids = Object.keys(conns);
+ if(!peer){ el.innerHTML = "연결 안됨"; return; }
+ const session = JSON.parse(localStorage.getItem("armySession")||"null");
+ let html = `<div style="display:flex;align-items:center;gap:6px;margin:6px 0"><span style="width:8px;height:8px;background:#12b76a;border-radius:50%;display:inline-block"></span><b>나 (${esc(session?.name||'사용자')})</b></div>`;
+ ids.forEach(id=>{
+  const name = conns[id].metadata?.name || "참여자";
+  html += `<div style="display:flex;align-items:center;gap:6px;margin:6px 0"><span style="width:8px;height:8px;background:#4285f4;border-radius:50%;display:inline-block"></span><b>${esc(name)}</b></div>`;
+ });
+ el.innerHTML = html;
+ const peerCountEl = document.getElementById("peerCount");
+ if(peerCountEl) peerCountEl.textContent = ids.length + 1;
+}
+
+function joinP2PChat(){
+ const roomInput = document.getElementById("chatRoomCode");
+ const room = (roomInput.value||"").trim();
+ if(!room){ alert("방 코드를 입력하세요."); return; }
+ const session = JSON.parse(localStorage.getItem("armySession")||"null");
+ if(!session){ alert("로그인이 필요합니다."); return; }
+
+ currentRoom = room;
+ localStorage.setItem("armyCurrentRoom", room);
+
+ document.getElementById("p2pStatus").textContent = "연결중...";
+ document.getElementById("joinBtn").disabled = true;
+
+ const safeRoom = (()=>{ let h=0; for(let i=0;i<room.length;i++) h=(h*31+room.charCodeAt(i))>>>0; return h.toString(16).padStart(8,'0'); })();
+ const myUniqueId = `army-v3-${safeRoom}-${Math.random().toString(36).slice(2, 5)}`;
+ const hostId = `army-v3-${safeRoom}-host`;
+
+ if(peer){ try{ peer.destroy(); }catch(e){} }
+ conns = {};
+
+ peer = new Peer(hostId);
+
+ peer.on('open', (id)=>{
+  onPeerConnected(room, session);
+ });
+
+ peer.on('error', (err)=>{
+  if(err.type === 'unavailable-id' || err.type === 'invalid-id'){
+   peer = new Peer(myUniqueId);
+   peer.on('open', ()=>{
+    onPeerConnected(room, session);
+    const conn = peer.connect(hostId, { metadata: { name: session.name || session.username } });
+    setupConn(conn);
+   });
+   peer.on('connection', (conn) => setupConn(conn));
+  } else {
+   document.getElementById("p2pStatus").textContent = "연결 오류 (" + err.type + ")";
+   document.getElementById("p2pStatus").style.color = "#d64545";
+   document.getElementById("joinBtn").disabled = false;
   }
-  const ids = Object.keys(conns);
-  const session = JSON.parse(localStorage.getItem("armySession")||"null");
-  let html = `<div style="display:flex;align-items:center;gap:6px;margin:6px 0"><span style="width:8px;height:8px;background:#12b76a;border-radius:50%;display:inline-block"></span><b>나 (${esc(session?.name||'사용자')})</b> <small style="color:#667085">${esc(currentRoom||'')}</small></div>`;
-  ids.forEach(id=>{
-    const name = conns[id].metadata?.name || "참여자";
-    html += `<div style="display:flex;align-items:center;gap:6px;margin:6px 0"><span style="width:8px;height:8px;background:#4285f4;border-radius:50%;display:inline-block"></span><b>${esc(name)}</b></div>`;
-  });
-  el.innerHTML = html;
-  if(peerCountEl) peerCountEl.textContent = ids.length + 1;
-  if(statusEl){ statusEl.textContent = `연결됨 (${currentRoom}) - ${ids.length+1}명`; statusEl.style.color = "#09865f"; }
+ });
+
+ peer.on('connection', (conn)=>{
+  setupConn(conn);
+ });
 }
-
-
-// ===== FIX V2: 한글 방 코드 안전 변환 + 방 목록 관리 (전체 재구현) ======
-function slugifyRoomForId(room){
-  room = (room||"").trim();
-  if(!room) return "default";
-  if(/^[a-z0-9-]{3,30}$/.test(room) && !/[가-힣]/.test(room)) return room.toLowerCase();
-  let h=0; for(let i=0;i<room.length;i++) h=(h*31+room.charCodeAt(i))>>>0;
-  const hash = h.toString(16).padStart(8,'0');
-  const ascii = room.toLowerCase().replace(/[^a-z0-9-]/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'').slice(0,12) || 'room';
-  return `${ascii}-${hash}`.slice(0,28);
-}
-function getRoomListKey(){ return "armyRoomList"; }
-function getDefaultRoomKey(){ return "armyDefaultRoom"; }
-function renderRoomList(){
-  const sel = document.getElementById("roomSelectDropdown");
-  const box = document.getElementById("roomSelectBox");
-  if(!sel) return;
-  try{
-    let list = [];
-    try{ list = JSON.parse(localStorage.getItem(getRoomListKey())||"[]"); }catch(e){ list=[]; }
-    const def = localStorage.getItem(getDefaultRoomKey()) || localStorage.getItem(getLastRoomKey()) || "";
-    sel.innerHTML = "";
-    if(list.length===0){
-      sel.innerHTML = `<option value="">(저장된 방 없음 - 새 방 생성 필요)</option>`;
-      if(box) box.innerHTML = `<div style="font-size:11px;color:#8793a3;padding:6px">저장된 방 없음. 방 코드를 입력하고 <b>새 방 생성</b>을 누르세요.</div>`;
-    } else {
-      list.forEach(r=>{
-        const opt=document.createElement("option");
-        opt.value=r.code;
-        opt.textContent = r.code + (r.code===def ? " ★기본" : "");
-        if(r.code===def) opt.selected=true;
-        sel.appendChild(opt);
-      });
-      if(box){
-        box.innerHTML = list.map(r=>{
-          const safe = r.code.replace(/'/g, "&#39;");
-          return `<div style="display:flex;gap:6px;align-items:center;margin:4px 0;font-size:12px"><span style="flex:1">${r.code} <small style="color:#8a96a6">(${r.safeId||''})</small> ${r.code===def?'<b style="color:#1d5fae">★</b>':''}</span><button onclick="selectRoom('${safe}')" style="padding:4px 8px;font-size:11px">입장</button><button onclick="deleteRoom('${safe}')" class="gray" style="padding:4px 8px;font-size:11px">삭제</button></div>`;
-        }).join("");
-      }
-    }
-    const input=document.getElementById("chatRoomCode");
-    if(def && input && !input.value) input.value=def;
-  }catch(e){
-    console.error(e);
-    const sel2=document.getElementById("roomSelectDropdown");
-    if(sel2) sel2.innerHTML = `<option>오류: ${e.message}</option>`;
-  }
-}
-function createNewRoom(){
-  const input=document.getElementById("chatRoomCode");
-  let code=(input?.value||"").trim();
-  if(!code) code=`육군-유가족-${Math.floor(Math.random()*90)+10}`;
-  const safeId=slugifyRoomForId(code);
-  let list=[]; try{ list=JSON.parse(localStorage.getItem(getRoomListKey())||"[]"); }catch(e){ list=[]; }
-  if(!list.find(x=>x.code===code)){
-    list.unshift({code, safeId, created:Date.now()});
-    localStorage.setItem(getRoomListKey(), JSON.stringify(list.slice(0,30)));
-  }
-  localStorage.setItem(getDefaultRoomKey(), code);
-  localStorage.setItem(getLastRoomKey(), code);
-  renderRoomList();
-  if(typeof showToast==='function') showToast(`새 방 생성: ${code}`);
-  switchRoom(code);
-}
-function setAsDefaultRoom(){
-  const input=document.getElementById("chatRoomCode");
-  const sel=document.getElementById("roomSelectDropdown");
-  const code=(sel?.value || input?.value || "").trim();
-  if(!code){ alert("방 코드를 선택하세요"); return; }
-  localStorage.setItem(getDefaultRoomKey(), code);
-  localStorage.setItem(getLastRoomKey(), code);
-  renderRoomList();
-  if(typeof showToast==='function') showToast(`기본방 지정: ${code}`);
-}
-function selectRoom(code){
-  if(!code) return;
-  const input=document.getElementById("chatRoomCode");
-  if(input) input.value=code;
-  switchRoom(code);
-}
-function deleteRoom(code){
-  if(!confirm(`[${code}] 삭제?`)) return;
-  let list=[]; try{ list=JSON.parse(localStorage.getItem(getRoomListKey())||"[]"); }catch(e){}
-  list=list.filter(x=>x.code!==code);
-  localStorage.setItem(getRoomListKey(), JSON.stringify(list));
-  renderRoomList();
-}
-// ===== END FIX V2 =====
-
-
-function switchRoom(newRoom){
-  newRoom = (newRoom||"").trim();
-  if(!newRoom) return;
-  if(currentRoom === newRoom) return;
-
-  if(peer){ try{ peer.destroy(); }catch(e){} peer=null; }
-  conns = {};
-  
-  currentRoom = newRoom;
-  localStorage.setItem(getLastRoomKey(), newRoom);
-  loadChat(newRoom);
-  renderChat();
-  updatePeerList();
-  
-  // 자동 재접속
-  setTimeout(()=> joinP2PChat(newRoom), 100);
-}
-
-function joinP2PChat(roomParam){
-  const roomInput = document.getElementById("chatRoomCode");
-  let rawRoom = (roomParam || roomInput?.value || "").trim();
-  if(!rawRoom){ alert("방 코드를 입력하세요"); return; }
-  let room = rawRoom;
-  const safeRoom = slugifyRoomForId(rawRoom);
-
-  const session = JSON.parse(localStorage.getItem("armySession")||"null");
-  if(!session){ alert("로그인이 필요합니다."); return; }
-
-  if(currentRoom && currentRoom !== room){
-    switchRoom(room);
-    return;
-  }
-
-  currentRoom = room;
-  localStorage.setItem(getLastRoomKey(), room);
-  loadChat(room);
-  renderChat();
-  const statusEl = document.getElementById("p2pStatus");
-  const joinBtn = document.getElementById("joinBtn");
-  if(statusEl){ statusEl.textContent = "연결중... ("+room+")"; statusEl.style.color = "#667085"; }
-  if(joinBtn){ joinBtn.disabled = true; joinBtn.textContent = "연결중..."; }
-
-  const myUniqueId = `army-v3-${safeRoom}-${Math.random().toString(36).slice(2,4)}${Date.now().toString(36).slice(-3)}`;
-  const hostId = `army-v3-${safeRoom}-host`;
-
-  if(peer){ try{ peer.destroy(); }catch(e){} }
-  conns = {};
-
-  const peerOptionsLocal = {
-    config: { 
-      iceServers: [ 
-        {urls:"stun:stun.l.google.com:19302"}, 
-        {urls:"stun:stun1.l.google.com:19302"},
-        {urls:"stun:stun2.l.google.com:19302"},
-        {urls:"turn:openrelay.metered.ca:80", username:"openrelayproject", credential:"openrelayproject"},
-        {urls:"turn:openrelay.metered.ca:443", username:"openrelayproject", credential:"openrelayproject"},
-        {urls:"turn:openrelay.metered.ca:443?transport=tcp", username:"openrelayproject", credential:"openrelayproject"}
-      ],
-      iceTransportPolicy: "all"
-    },
-    debug: 1
-  };
-
-  function createHost(){
-    console.log("[P2P] host 시도", hostId);
-    peer = new Peer(hostId, peerOptionsLocal);
-    bindPeerEvents(true);
-  }
-  function createClient(){
-    console.log("[P2P] client 시도", myUniqueId, "->", hostId);
-    peer = new Peer(myUniqueId, peerOptionsLocal);
-    bindPeerEvents(false);
-  }
-  function bindPeerEvents(isHost){
-    peer.on('open', (id)=>{
-      console.log("[P2P] open", id, "isHost", isHost);
-      onPeerConnected(room, session);
-      if(!isHost){
-        const conn = peer.connect(hostId, { metadata: { name: session.name || session.username, room: room }, reliable: true });
-        setupConn(conn);
-        setTimeout(()=>{
-          if(Object.keys(conns).length===0){
-            console.log("[P2P] 호스트 무응답, 호스트로 승격");
-            try{ peer.destroy(); }catch(e){}
-            createHost();
-          }
-        }, 3500);
-      }
-    });
-    peer.on('connection', (conn)=> setupConn(conn));
-    peer.on('disconnected', ()=>{
-      console.log("[P2P] disconnected - 재연결");
-      const st=document.getElementById("p2pStatus");
-      if(st) st.textContent="재연결중...";
-      try{ peer.reconnect(); }catch(e){ setTimeout(()=>{ isHost?createHost():createClient(); },1500); }
-    });
-    peer.on('error', (err)=>{
-      console.error("[P2P] error", err.type, err);
-      if(err.type === 'unavailable-id' && isHost){
-        try{ peer.destroy(); }catch(e){}
-        createClient();
-      }else if(err.type === 'peer-unavailable'){
-        if(!isHost){
-          const statusEl2=document.getElementById("p2pStatus");
-          const joinBtn2=document.getElementById("joinBtn");
-          if(statusEl2){ statusEl2.textContent=`대기중 - 방 생성됨 (${room})`; statusEl2.style.color="#09865f"; }
-          if(joinBtn2){ joinBtn2.disabled=false; joinBtn2.textContent="대기중(호스트)"; }
-          try{ peer.destroy(); }catch(e){}
-          createHost();
-        }
-      }else{
-        const statusEl2=document.getElementById("p2pStatus");
-        const joinBtn2=document.getElementById("joinBtn");
-        if(statusEl2){ statusEl2.textContent = "연결 오류 (" + err.type + ") - 새로고침"; statusEl2.style.color = "#d64545"; }
-        if(joinBtn2){ joinBtn2.disabled = false; joinBtn2.textContent = "재연결"; }
-      }
-    });
-  }
-  // 핵심: 클라이언트로 먼저 시도 (호스트 충돌 방지)
-  createClient();
-}
-
-
 
 function onPeerConnected(room, session){
-  const statusEl = document.getElementById("p2pStatus");
-  const joinBtn = document.getElementById("joinBtn");
-  if(statusEl){ statusEl.textContent = `연결됨 (${room})`; statusEl.style.color = "#09865f"; }
-  if(joinBtn){ joinBtn.textContent = "연결됨"; joinBtn.disabled = false; }
-  updatePeerList();
-  const roomInput = document.getElementById("chatRoomCode");
-  if(roomInput && roomInput.value.trim() !== room) roomInput.value = room;
+ document.getElementById("p2pStatus").textContent = `연결됨 (${room})`;
+ document.getElementById("p2pStatus").style.color = "#09865f";
+ document.getElementById("joinBtn").textContent = "재연결";
+ document.getElementById("joinBtn").disabled = false;
+ updatePeerList();
 }
 
 function setupConn(conn){
-  if(!conn) return;
-  conn.on('open', ()=>{
-    const remoteRoom = conn.metadata?.room;
-    if(remoteRoom && currentRoom && remoteRoom !== currentRoom){
-      try{ conn.close(); }catch(e){}
-      return;
+ conn.on('open', ()=>{
+  conns[conn.peer] = conn;
+  updatePeerList();
+  try{
+   const curRoom = currentRoom || "육군-유가족-1";
+   const recent = chatMessages.filter(m=>(m.room||"육군-유가족-1")===curRoom).slice(-30);
+   if(recent.length) conn.send({type:'history', data: recent});
+  }catch(e){}
+ });
+ 
+ conn.on('data', (payload)=>{
+  if(!payload) return;
+  if(payload.type==='chat'){
+   handleIncomingChat(payload.data);
+   Object.values(conns).forEach(c=>{
+    if(c.peer !== conn.peer){
+     try{ c.send(payload); }catch(e){}
     }
-    conns[conn.peer] = conn;
-    updatePeerList();
-    try{
-      const recent = chatMessages.filter(m=>m.room===currentRoom).slice(-30);
-      if(recent.length) conn.send({type:'history', data: recent, room: currentRoom});
-    }catch(e){}
-  });
-  
-  conn.on('data', (payload)=>{
-    if(!payload) return;
-    if(payload.room && payload.room !== currentRoom) return;
-    if(payload.type==='chat'){
-      handleIncomingChat(payload.data);
-      Object.values(conns).forEach(c=>{
-        if(c.peer !== conn.peer && c.open){
-          try{ c.send(payload); }catch(e){}
-        }
-      });
-    } else if(payload.type==='history'){
-      if(payload.room && payload.room !== currentRoom) return;
-      const incoming = payload.data||[];
-      let added = 0;
-      incoming.forEach(m=>{
-        if(m.room !== currentRoom) return;
-        if(!chatMessages.find(x=>x.id===m.id)){
-          chatMessages.push(m);
-          added++;
-        }
-      });
-      if(added){
-        chatMessages.sort((a,b)=>a.ts-b.ts);
-        saveChat();
-        renderChat();
-      }
+   });
+  } else if(payload.type==='history'){
+   const incoming = payload.data||[];
+   let added = 0;
+   incoming.forEach(m=>{
+    if(!chatMessages.find(x=>x.id===m.id)){
+     chatMessages.push(m);
+     added++;
     }
-  });
+   });
+   if(added){
+    chatMessages.sort((a,b)=>a.ts-b.ts);
+    saveChat();
+    renderChat();
+   }
+  }
+ });
 
-  conn.on('close', ()=>{ delete conns[conn.peer]; updatePeerList(); });
-  conn.on('error', ()=>{ delete conns[conn.peer]; updatePeerList(); });
+ conn.on('close', ()=>{ delete conns[conn.peer]; updatePeerList(); });
+ conn.on('error', ()=>{ delete conns[conn.peer]; updatePeerList(); });
 }
 
-function clearChat(){ 
-  if(!currentRoom){ alert("방을 먼저 선택하세요"); return; }
-  if(!confirm(`[${currentRoom}] 방의 대화기록을 삭제하시겠습니까? 다른 방 기록은 유지됩니다.`)) return; 
-  chatMessages=[]; 
-  localStorage.removeItem(getChatStorageKey(currentRoom));
-  renderChat(); 
+function clearCurrentRoomChat(){ 
+ const curRoom = currentRoom || "육군-유가족-1";
+ if(!confirm(`[${curRoom}] 방의 대화기록을 삭제하시겠습니까?`)) return; 
+ chatMessages = chatMessages.filter(m => (m.room || "육군-유가족-1") !== curRoom); 
+ saveChat(); 
+ renderChat(); 
 }
 
 function exportChat(){
-  if(!currentRoom){ alert("방을 먼저 선택하세요"); return; }
-  const filtered = chatMessages.filter(m=>m.room===currentRoom);
-  const txt = filtered.map(m=> `[${new Date(m.ts).toLocaleString()}] [${m.room}] ${m.userName}: ${m.text}`).join("
-");
-  const blob = new Blob([txt], {type:"text/plain"}); const url = URL.createObjectURL(blob);
-  const a=document.createElement("a"); a.href=url; a.download=`army-chat-${currentRoom}-${new Date().toISOString().slice(0,10)}.txt`; a.click(); URL.revokeObjectURL(url);
+ const curRoom = currentRoom || "육군-유가족-1";
+ const roomMsgs = chatMessages.filter(m => (m.room || "육군-유가족-1") === curRoom);
+ const txt = roomMsgs.map(m=> `[${new Date(m.ts).toLocaleString()}] ${m.userName}: ${m.text}`).join("\n");
+ const blob = new Blob([txt], {type:"text/plain"}); const url = URL.createObjectURL(blob);
+ const a=document.createElement("a"); a.href=url; a.download=`army-chat-${curRoom}-${new Date().toISOString().slice(0,10)}.txt`; a.click(); URL.revokeObjectURL(url);
 }
 
 (function initChat(){
-  setTimeout(()=>{ try{ renderRoomList(); }catch(e){} }, 200);
-
-  const roomInput = document.getElementById("chatRoomCode");
-  const lastRoom = localStorage.getItem(getLastRoomKey());
-  if(lastRoom && roomInput && !roomInput.value) roomInput.value = lastRoom;
-
-  if(roomInput){
-    roomInput.addEventListener("change", ()=>{
-      const newRoom = roomInput.value.trim();
-      if(newRoom){
-        localStorage.setItem(getLastRoomKey(), newRoom);
-        if(currentRoom && currentRoom !== newRoom){
-          if(confirm(`방을 [${currentRoom}] -> [${newRoom}] 로 이동할까요? 대화는 방별로 따로 저장됩니다.`)){
-            switchRoom(newRoom);
-          }
-        } else if(!currentRoom){
-          switchRoom(newRoom);
-        }
-      }
-    });
+ loadChat();
+ const origGo = window.go;
+ window.go = function(page, el){
+  if(origGo) origGo(page, el);
+  else {
+   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+   document.getElementById(page)?.classList.add("active");
+   document.querySelectorAll(".bottom .nav").forEach(n=>n.classList.remove("active"));
+   if(el) el.classList.add("active");
   }
-
-  const origGo = window.go;
-  window.go = function(page, el){
-    if(origGo) origGo(page, el);
-    else {
-      document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
-      document.getElementById(page)?.classList.add("active");
-      document.querySelectorAll(".bottom .nav").forEach(n=>n.classList.remove("active"));
-      if(el) el.classList.add("active");
-    }
-    if(page==="chat"){
-      setTimeout(()=>{ 
-        if(currentRoom) loadChat(currentRoom);
-        renderChat(); 
-        clearUnread(); 
-      },50);
-    }
-  };
-  setTimeout(()=> { try{ if(typeof initNotify==='function') initNotify(); }catch(e){} }, 500);
+  if(page==="chat"){
+   setTimeout(()=>{ renderChat(); clearUnread(); },50);
+  }
+ };
+ setTimeout(()=> { 
+  try{ 
+    initNotify(); 
+    initRoomSystem();
+  }catch(e){} 
+ }, 400);
 })();
-
 </script>
 
 </body>
-   </html>
+</html>
