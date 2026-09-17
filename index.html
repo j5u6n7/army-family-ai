@@ -774,7 +774,6 @@ function applyUser(){
  const rank = document.getElementById("applyRank").value.trim();
  const name = document.getElementById("applyName").value.trim();
  const phone = document.getElementById("applyPhone").value.trim();
-
  if(!id || !pw || !org || !rank || !name || !phone){ alert("모든 정보를 입력해주세요."); return; }
  if(db.users.some(x => x.loginId === id)){ alert("이미 사용 중인 아이디입니다."); return; }
 
@@ -963,7 +962,6 @@ function editDeath(id){
  document.getElementById("deathModal").dataset.edit=id;
  openModal("deathModal");
 }
-
 function saveDeath(){
  const caseId = document.getElementById("deathCase").value;
  if(!caseId){ alert("사건을 선택해주세요."); return; }
@@ -1005,7 +1003,6 @@ function renderDeaths(){
 </div>`;
  }).join("") : "<div class='empty'>등록된 사망정보가 없습니다.</div>";
 }
-
 function prepareConsult(id){
  fillSelects();
  document.getElementById("consultCase").value=id;
@@ -1068,7 +1065,6 @@ function renderConsults(){
 </div>`;
  }).join("");
 }
-
 function openAI(){
  const text = document.getElementById("aiText").value.trim();
  if(!text){ alert("AI에게 질문할 내용을 입력해주세요."); return; }
@@ -1110,7 +1106,6 @@ function openTodo(id = null){
  }
  openModal("todoModal");
 }
-
 function saveTodo(){
  const caseId = document.getElementById("todoCase").value;
  const text = document.getElementById("todoText").value.trim();
@@ -1173,7 +1168,6 @@ function openAIReport(){
  document.getElementById("aiText").value = `다음 유가족 상담기록을 바탕으로 업무용 보고서 초안을 작성해주세요.\n\n구성:\n1. 상담 개요\n2. 주요 상담내용\n3. 유가족 요구사항\n4. 현재 지원상황\n5. 필요한 후속조치\n6. 추가 확인사항\n7. 담당자 참고사항\n\n상담기록:\n${text}`;
  go("ai");
 }
-
 function searchAll(){
  const q = document.getElementById("globalSearch").value.trim().toLowerCase();
  if(!q){ renderCases(); return; }
@@ -1614,7 +1608,6 @@ function testNotify(){
   sendTelegramNotification(demo.userName, demo.text, demo.room);
   showToast("테스트 텔레그램 전송 시도중...");
 }
-
 function addChatMessage(msg, save=true){
  chatMessages.push(msg);
  if(save) saveChat();
@@ -1698,7 +1691,6 @@ function selectRoom(room){
   joinP2PChat();
   showToast(`[${room}] 방으로 전환되었습니다.`);
 }
-
 function setAsDefaultRoom(room){
   const target = room || currentRoom || document.getElementById("chatRoomCode")?.value.trim();
   if(!target){ alert("방을 먼저 선택/입력하세요"); return; }
@@ -1953,4 +1945,4 @@ function exportChat(){
 </script>
 
 </body>
-</html>
+   </html>
